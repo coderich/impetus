@@ -1,0 +1,29 @@
+server:
+  port: 3003
+
+data:
+  rooms:
+    1:
+      exits:
+        n: rooms.1
+    2:
+      exits:
+        s: rooms.2
+
+  npcs:
+    1:
+      name: 'Rich'
+      age: 43
+    2:
+      name: 'Anne'
+      age: 38
+
+events:
+  Server.connection:
+    - $emit: ['myEvent']
+
+  myEvent:
+    - $db.set: ['test', { '$db.get': ['room.se1'] }]
+    - $db.set: ['test2', { '$data.get': ['rooms.1'] }]
+    - $db.set: ['test3', { '$data.ref': ['rooms.2.exits.s'] }]
+    - $db.set: ['test4', { '$data.get': ['rooms.2.exits.s'] }]

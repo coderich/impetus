@@ -1,0 +1,15 @@
+{
+  "name": "impetus-client",
+  "author": "Richard Livolsi",
+  "version": "1.0.0",
+  "license": "ISC",
+  "main": "index.js",
+  "description": "Impetus Client",
+  "scripts": {
+    "test": "jest",
+    "start": "node client.js"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.4.0"
+  }
+}
