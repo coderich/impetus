@@ -1,12 +1,5 @@
 import { get, set, pull, unset } from 'lodash';
-
-const map = (mixed, fn) => {
-  if (mixed == null) return mixed;
-  const isArray = Array.isArray(mixed);
-  const arr = isArray ? mixed : [mixed];
-  const results = arr.map(el => fn(el));
-  return isArray ? results : results[0];
-};
+import { map } from './Util';
 
 export default class Data {
   constructor(data) {
@@ -41,9 +34,9 @@ export default class Data {
     return this.set(key, this.get(key, 0) + number);
   }
 
-  static create(data) {
-    const instance = new Data(data);
-    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(instance)).filter(el => ['constructor'].indexOf(el) === -1);
+  static toObject(instance) {
+    const ignores = ['constructor'];
+    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(instance)).filter(el => ignores.indexOf(el) === -1);
     return methods.reduce((prev, method) => Object.assign(prev, { [method]: (...args) => instance[method].call(instance, ...args) }), {});
   }
 }

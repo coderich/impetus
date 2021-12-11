@@ -1,43 +1,54 @@
 import { createClient } from 'redis';
+import { map } from './Util';
 
-const client = createClient();
+export default class Redis {
+  constructor() {
+    this.client = createClient();
+  }
 
-export const connect = () => client.connect();
+  connect() {
+    return this.client.connect();
+  }
 
-export const get = async (id, field = '') => {
-  return client.json.get(await Promise.resolve(id), `.${field}`);
-};
+  async get(key, defaultValue) {
+    const [id, ...field] = await Promise.resolve(key).then(k => k.split('.'));
+    return this.client.json.get(id, `.${field.join('.')}`).then((value = defaultValue) => value);
+  }
 
-export const list = async (id, field) => {
-  const results = await get(id, field);
-  return Promise.all(results.map(li => get(li)));
-};
+  async set(key, value) {
+    const [id, ...field] = await Promise.resolve(key).then(k => k.split('.'));
+    return this.client.json.set(id, `.${field.join('.')}`, await Promise.resolve(value));
+  }
 
-export const set = async (id, ...args) => {
-  let field; let data;
-  if (args[1] !== undefined) ([field, data] = args);
-  else ([field, data] = ['', args[0]]);
-  const result = await client.json.set(await Promise.resolve(id), `.${field}`, await Promise.resolve(data));
-  if (field === '') return data;
-  return result;
-};
+  async del(key) {
+    const [id, ...field] = await Promise.resolve(key).then(k => k.split('.'));
+    return this.client.json.del(id, `.${field.join('.')}`);
+  }
 
-export const del = async (id, field = '') => {
-  return client.json.del(await Promise.resolve(id), `.${field}`);
-};
+  ref(key) {
+    return map(this.get(key), li => this.get(li), true);
+  }
 
-export const push = async (id, field, data) => {
-  return client.json.arrappend(await Promise.resolve(id), `.${field}`, await Promise.resolve(data));
-};
+  async push(key, value) {
+    const [id, ...field] = await Promise.resolve(key).then(k => k.split('.'));
+    return this.client.json.arrappend(id, `.${field.join('.')}`, await Promise.resolve(value));
+  }
 
-export const pull = async (id, field, data) => {
-  const index = await client.json.arrindex(await Promise.resolve(id), `.${field}`, await Promise.resolve(data));
-  if (index < 0) return null;
-  return client.json.arrpop(await Promise.resolve(id), `.${field}`, index);
-};
+  async pull(key, value) {
+    const [id, ...field] = await Promise.resolve(key).then(k => k.split('.'));
+    const index = await this.client.json.arrindex(id, `.${field.join('.')}`, await Promise.resolve(value));
+    if (index < 0) return null;
+    return this.client.json.arrpop(id, `.${field.join('.')}`, index);
+  }
 
-export const inc = async (id, field, number) => {
-  return client.json.numincrby(await Promise.resolve(id), `.${field}`, number);
-};
+  async inc(key, number) {
+    const [id, ...field] = await Promise.resolve(key).then(k => k.split('.'));
+    return this.client.json.numincrby(id, `.${field.join('.')}`, number);
+  }
 
-export default { get, set, del, list, push, pull, inc };
+  static toObject(instance) {
+    const ignores = ['constructor', 'connect'];
+    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(instance)).filter(el => ignores.indexOf(el) === -1);
+    return methods.reduce((prev, method) => Object.assign(prev, { [method]: (...args) => instance[method].call(instance, ...args) }), {});
+  }
+}

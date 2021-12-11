@@ -19,11 +19,12 @@ data:
       age: 38
 
 events:
-  Server.connection:
+  $server.ready:
     - $emit: ['myEvent']
 
   myEvent:
-    - $db.set: ['test', { '$db.get': ['room.se1'] }]
+    - $db.set: ['oh:lord', { '$data.get': ['rooms'] }]
+    - $db.set: ['test', { '$db.get': ['allRooms.1'] }]
     - $db.set: ['test2', { '$data.get': ['rooms.1'] }]
     - $db.set: ['test3', { '$data.ref': ['rooms.2.exits.s'] }]
     - $db.set: ['test4', { '$data.get': ['rooms.2.exits.s'] }]

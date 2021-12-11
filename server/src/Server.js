@@ -6,23 +6,23 @@ export default class Server {
     const server = SocketServer();
 
     server.on('connection', (socket) => {
-      EventEmitter.emit('System', { type: 'Server.connection', event: socket });
+      EventEmitter.emit('$system', { type: '$server.connection', event: socket });
 
       socket.on('disconnecting', (reason) => {
-        EventEmitter.emit('System', { type: 'Server.disconnecting', event: reason });
+        EventEmitter.emit('$system', { type: '$server.disconnecting', event: reason });
       });
 
       socket.on('disconnect', (reason) => {
-        EventEmitter.emit('System', { type: 'Server.disconnect', event: reason });
+        EventEmitter.emit('$system', { type: '$server.disconnect', event: reason });
         socket.removeAllListeners();
       });
 
       socket.on('error', (error) => {
-        EventEmitter.emit('System', { type: 'Server.error', event: error });
+        EventEmitter.emit('$system', { type: '$server.error', event: error });
       });
 
       socket.on('message', (input) => {
-        EventEmitter.emit('System', { type: 'Server.message', event: input });
+        EventEmitter.emit('$system', { type: '$server.message', event: input });
       });
     });
 
