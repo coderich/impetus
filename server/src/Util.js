@@ -7,8 +7,10 @@ export const map = (mixed, fn, promise = false) => {
   return results[0];
 };
 
-export const promiseChain = () => {
-
+export const promiseChain = (promises) => {
+  return promises.reduce((chain, promise) => {
+    return chain.then(chainResults => promise([...chainResults]).then(promiseResult => [...chainResults, promiseResult]));
+  }, Promise.resolve([]));
 };
 
 export const resolveDataObject = (obj) => {

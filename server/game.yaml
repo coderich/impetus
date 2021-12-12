@@ -3,34 +3,29 @@ server:
 
 data:
   rooms:
-    1:
+    a:
       exits:
-        n: rooms.2
-    2:
+        n: rooms.b
+    b:
       exits:
-        s: rooms.1
+        s: rooms.a
 
   npcs:
-    1:
+    rich:
+      room: rooms.b
       name: 'Rich'
       age: 43
-    2:
+    anne:
       name: 'Anne'
       age: 38
 
 events:
   $server.ready:
-    - $db.set: ['impetus', { var: data }]
-    - $db.set: ['test1', { var: data.rooms.1 }]
-    - $db.set: ['test2', { $data.ref: ['rooms.2.exits.s'] }]
-    - $db.set: ['test3', { var: data.rooms.2.exits.s }]
+    - $data.set: ['installed', { $db.get: 'impetus.installed '}]
+    - if: [{ '!': { var: data.installed } }, { $emit: 'install' }]
 
   $server.connection:
-    - $socket.emit: ['data', { $db.get: 'impetus' }]
-    - $socket.set: ['some.path', 'here']
-    - $socket.emit: ['data', { var: socket.id }]
-    - $emit: ['myEvent', { $object: ['no', { $db.get: 'impetus' }]}]
+    - $socket.emit: ['data', 'Welcome to Impetus!']
 
-  myEvent:
-    - $log: { var: event }
-    - $socket.emit: ['data', { var: event.no.npcs }]
+  install:
+    - $db.set: ['impetus', { $object: ['installed', true] }]
