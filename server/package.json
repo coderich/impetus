@@ -11,9 +11,7 @@
   },
   "dependencies": {
     "chance": "^1.1.8",
-    "dot-object": "^2.1.4",
     "esm": "^3.2.25",
-    "js-yaml": "^4.1.0",
     "json-logic-js": "^2.0.1",
     "lodash": "^4.17.21",
     "redis": "^4.0.0",

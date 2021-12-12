@@ -9,23 +9,23 @@ export default class Server {
 
     server.on('connection', (socket) => {
       socket.$data = toDataAccessObject(new Data(socket.data));
-      EventEmitter.emit('$system', { type: '$server.connection', socket });
+      EventEmitter.emit('$system', { type: '$server:connection', socket });
 
       socket.on('disconnecting', (reason) => {
-        EventEmitter.emit('$system', { type: '$server.disconnecting', socket, event: reason });
+        EventEmitter.emit('$system', { type: '$server:disconnecting', socket, event: reason });
       });
 
       socket.on('disconnect', (reason) => {
-        EventEmitter.emit('$system', { type: '$server.disconnect', socket, event: reason });
+        EventEmitter.emit('$system', { type: '$server:disconnect', socket, event: reason });
         socket.removeAllListeners();
       });
 
       socket.on('error', (error) => {
-        EventEmitter.emit('$system', { type: '$server.error', socket, event: error });
+        EventEmitter.emit('$system', { type: '$server:error', socket, event: error });
       });
 
-      socket.on('message', (input) => {
-        EventEmitter.emit('$system', { type: '$server.message', socket, event: input });
+      socket.on('data', (input) => {
+        EventEmitter.emit('$system', { type: '$server:data', socket, event: input });
       });
     });
 
