@@ -7,6 +7,7 @@ export default class Data {
   }
 
   get(key, value) {
+    if (!key) return this.data;
     return get(this.data, key, value);
   }
 
@@ -32,11 +33,5 @@ export default class Data {
 
   inc(key, number) {
     return this.set(key, this.get(key, 0) + number);
-  }
-
-  static toObject(instance) {
-    const ignores = ['constructor'];
-    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(instance)).filter(el => ignores.indexOf(el) === -1);
-    return methods.reduce((prev, method) => Object.assign(prev, { [method]: (...args) => instance[method].call(instance, ...args) }), {});
   }
 }

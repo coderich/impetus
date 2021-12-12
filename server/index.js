@@ -5,24 +5,32 @@ import Data from './src/Data';
 import Redis from './src/Redis';
 import Server from './src/Server';
 import EventEmitter from './src/EventEmitter';
+import { resolveDataObject, toDataAccessObject, daoMethods } from './src/Util';
 
 // Load game data
 const game = YAML.load(FS.readFileSync(`${__dirname}/game.yaml`, 'utf8'));
 
 // Create instances
 const redis = new Redis();
-const data = new Data(game.data);
 
 // Extend JSON Logic with custom operations
-JSONLogic.add_operation('$db', Redis.toObject(redis));
-JSONLogic.add_operation('$data', Data.toObject(data));
-JSONLogic.add_operation('$emit', (type, event) => EventEmitter.emit('$system', { type, event }));
+JSONLogic.add_operation('$db', toDataAccessObject(redis));
+JSONLogic.add_operation('$data', toDataAccessObject(new Data(game.data)));
+JSONLogic.add_operation('$object', (...args) => resolveDataObject(args.reduce((prev, key, i) => (i % 2 === 0 ? Object.assign(prev, { [key]: args[i + 1] }) : prev), {})));
+JSONLogic.add_operation('$log', async (...args) => console.log(...await resolveDataObject(args))); // eslint-disable-line no-console
+JSONLogic.add_operation('$emit', function emit(type, event) { return EventEmitter.emit('$system', { type, event, socket: this.socket }); });
+JSONLogic.add_operation('$socket', {
+  emit: async function emit(...args) { return this.socket.emit(...await resolveDataObject(args)); },
+  ...daoMethods.reduce((prev, method) => Object.assign(prev, {
+    [method]: function dao(...args) { return this.socket.$data[method](...args); },
+  }), {}),
+});
 
 // The entire engine is event driven
-EventEmitter.on('$system', ({ type, event }) => {
-  console.log(type);
+EventEmitter.on('$system', async (...args) => {
   const { events = {} } = game;
-  JSONLogic.apply(events[type], { event });
+  const { type, socket, event } = await resolveDataObject(...args);
+  JSONLogic.apply(events[type], { socket, event, data: game.data });
 });
 
 // Start server

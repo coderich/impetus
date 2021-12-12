@@ -5,10 +5,10 @@ data:
   rooms:
     1:
       exits:
-        n: rooms.1
+        n: rooms.2
     2:
       exits:
-        s: rooms.2
+        s: rooms.1
 
   npcs:
     1:
@@ -20,11 +20,17 @@ data:
 
 events:
   $server.ready:
-    - $emit: ['myEvent']
+    - $db.set: ['impetus', { var: data }]
+    - $db.set: ['test1', { var: data.rooms.1 }]
+    - $db.set: ['test2', { $data.ref: ['rooms.2.exits.s'] }]
+    - $db.set: ['test3', { var: data.rooms.2.exits.s }]
+
+  $server.connection:
+    - $socket.emit: ['data', { $db.get: 'impetus' }]
+    - $socket.set: ['some.path', 'here']
+    - $socket.emit: ['data', { var: socket.id }]
+    - $emit: ['myEvent', { $object: ['no', { $db.get: 'impetus' }]}]
 
   myEvent:
-    - $db.set: ['oh:lord', { '$data.get': ['rooms'] }]
-    - $db.set: ['test', { '$db.get': ['allRooms.1'] }]
-    - $db.set: ['test2', { '$data.get': ['rooms.1'] }]
-    - $db.set: ['test3', { '$data.ref': ['rooms.2.exits.s'] }]
-    - $db.set: ['test4', { '$data.get': ['rooms.2.exits.s'] }]
+    - $log: { var: event }
+    - $socket.emit: ['data', { var: event.no.npcs }]
