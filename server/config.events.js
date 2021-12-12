@@ -1,19 +1,26 @@
 export default {
   '$server:ready': [
-    { '$ram.set': ['installed', { '$db.get': 'impetus.installed' }] },
-    { if: [{ '!': { var: 'ram.installed' } }, { $emit: 'install' }] },
+    async ({ $db, $emit }) => {
+      const installed = await $db.get('impetus.installed');
+      if (!installed) $emit('install');
+    },
   ],
 
   '$server:connection': [
-    { '$socket.emit': ['data', 'Welcome to Impetus!'] },
+    ({ socket }) => {
+      socket.emit('data', 'Welcome to Ipetus!');
+    },
   ],
 
   '$server:data': [
-    { if: [{ var: 'event.length' }, { '$socket.broadcast': ['data', { var: 'event' }] }] },
+    ({ socket, event }) => {
+      if (event) socket.broadcast.emit('data', event);
+    },
   ],
 
   install: [
-    { $install: [] },
-    { '$db.set': ['impetus', { $object: ['installed', true] }] },
+    ({ $db }) => {
+      $db.set('impetus', { installed: true });
+    },
   ],
 };
