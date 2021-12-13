@@ -27,7 +27,7 @@ export const resolveDataObject = (obj) => {
   });
 };
 
-export const daoMethods = ['get', 'set', 'del', 'ref', 'push', 'pull', 'inc'];
+export const daoMethods = ['get', 'set', 'del', 'push', 'pull', 'inc', 'hydrate'];
 
 export const toDataAccessObject = (instance) => {
   return daoMethods.reduce((prev, method) => Object.assign(prev, {

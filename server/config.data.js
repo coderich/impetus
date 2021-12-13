@@ -3,20 +3,20 @@ import Chance from 'chance';
 const chance = new Chance();
 
 export default {
-  rooms: {
+  Room: {
     a: {
       name: 'Hallway South',
       description: chance.paragraph(),
-      exits: { n: 'b' },
+      exits: { n: 'Room.b' },
     },
     b: {
       name: 'Hallway North',
       description: chance.paragraph(),
-      exits: { s: 'a' },
+      exits: { s: 'Room.a' },
     },
   },
 
-  npcs: {
+  NPC: {
     rich: {
       name: 'Rich',
       age: 43,

@@ -20,10 +20,6 @@ export default class Data {
     return unset(this.data, key);
   }
 
-  ref(key) {
-    return map(this.get(key), li => this.get(li));
-  }
-
   push(key, value) {
     return this.get(key, []).push(value);
   }
@@ -34,5 +30,9 @@ export default class Data {
 
   inc(key, by = 1) {
     return this.set(key, this.get(key, 0) + by);
+  }
+
+  hydrate(key) {
+    return map(this.get(key), li => this.get(li));
   }
 }

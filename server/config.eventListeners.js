@@ -1,57 +1,48 @@
 export default {
-  $ready: [
-    async ({ $db, data }) => {
-      const installed = await $db.get('impetus.installed');
-      if (!installed) $db.set('impetus', { rooms: data.rooms, players: {}, autoIncrement: 0 });
-    },
-  ],
+  $ready: async ({ $db, data }) => {
+    // const installed = await $db.get('installed');
+    // if (!installed) $db.set('installed', { ...data, players: {}, autoIncrement: 0 });
+    await $db.set('Player', {});
+    await $db.set('autoIncrement', 0);
+    return Object.entries(data).map(([model, definition]) => $db.set(model, definition));
+  },
 
-  '$socket:connection': [
-    async ({ $db, $emit, socket }) => {
-      const { handshake: { query } } = socket;
-      const { uid } = query;
+  '$socket:connection': async ({ $db, $emit, socket }) => {
+    const { handshake: { query } } = socket;
+    const { uid } = query;
 
-      if (!uid) {
-        socket.emit('query', 'Welcome to Impetus!\nWhat shall I call you? ', async (name) => {
-          const id = await $db.inc('impetus.autoIncrement');
-          socket.data.id = id;
-          await $db.set(`impetus.players.${id}`, { id, name, room: 'a' });
-          $emit('player:scan');
-        });
-      } else {
-        socket.data.player = uid;
+    if (!uid) {
+      socket.emit('query', 'Welcome to Impetus!\nWhat shall I call you? ', async (name) => {
+        const id = await $db.inc('autoIncrement');
+        socket.data.player = await $db.set(`Player.${id}`, { id, name, room: 'Room.a' });
         $emit('player:scan');
-      }
-    },
-  ],
+      });
+    } else {
+      socket.data.player = uid;
+      $emit('player:scan');
+    }
+  },
 
-  '$socket:data': [
-    ({ socket, event }) => {
-      if (event) socket.broadcast.emit('data', event);
-    },
-  ],
+  'player:scan': async ({ $db, socket }) => {
+    const { player } = socket.data;
+    const room = await player.ref('room');
+    const description = await room.describe();
+    socket.emit('data', description);
+  },
 
-  'player:scan': [
-    async ({ $db, socket }) => {
-      const { id } = socket.data;
-      const player = await $db.get(`impetus.players.${id}`);
-      const room = await $db.get(`impetus.rooms.${player.room}`);
-      socket.emit('data', `^c${room.name}\n\t^:${room.description}\n^gExits: ${Object.keys(room.exits).join(', ')}: `);
-    },
-  ],
+  'player:move': async ({ $db, $emit, socket, event: dir }) => {
+    const { player } = socket.data;
+    const room = await player.hydrate('room');
 
-  'player:move': [
-    async ({ $db, $emit, socket, event: dir }) => {
-      const { id } = socket.data;
-      const player = await $db.get(`impetus.players.${id}`);
-      const room = await $db.get(`impetus.rooms.${player.room}`);
+    if (room.exits[dir]) {
+      await player.set('room', room.exits[dir]);
+      $emit('player:scan');
+    } else {
+      socket.emit('data', '^rno exit in that direction!\n');
+    }
+  },
 
-      if (room.exits[dir]) {
-        await $db.set(`impetus.players.${player.id}.room`, room.exits[dir]);
-        $emit('player:scan');
-      } else {
-        socket.emit('data', '^rno exit in that direction!\n');
-      }
-    },
-  ],
+  'player:chat': ({ socket, event }) => {
+    return socket.broadcast.emit('data', `${event}\n`);
+  },
 };

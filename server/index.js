@@ -1,35 +1,36 @@
+import DAO from './src/DAO';
 import Data from './src/Data';
 import Redis from './src/Redis';
 import Server from './src/Server';
 import EventEmitter from './src/EventEmitter';
-import { promiseChain } from './src/Util';
 import config from './config';
 
-// Load game data
-const $db = new Redis();
-const $data = new Data(config.data);
+// Ensure config
+['data', 'models', 'server', 'eventBus', 'eventListeners', 'redis'].forEach(key => (config[key] = config[key] || {}));
+
+// Instantiate classes
+const data = new Data(config.data);
+const redis = new Redis(config.redis);
+const $db = new DAO(redis, config.models);
+const $data = new DAO(data, config.models);
+const $server = new Server(config.server);
 
 // The entire engine is event driven
 EventEmitter.on('$system', ({ type, socket, event }) => {
-  const { data, eventListeners = {} } = config;
-  const listeners = eventListeners[type] || [];
+  const listener = config.eventListeners[type];
 
-  return promiseChain(listeners.map(listener => () => {
-    const method = Array.isArray(listener) ? 'all' : 'resolve';
+  if (listener) {
     const $emit = (t, e) => EventEmitter.emit('$system', { type: t, socket, event: e });
-    return Promise[method](listener({ $db, $data, $emit, socket, event, data }));
-  }));
+    listener({ $db, $data, $emit, socket, event, data: config.data });
+  }
 });
 
 EventEmitter.on('$system', ({ type: systemType, socket }) => {
   if (systemType === '$socket:connection') {
-    const { eventBus = {} } = config;
-
-    Object.entries(eventBus).forEach(([bus, event]) => {
+    Object.entries(config.eventBus).forEach(([bus, events]) => {
       socket.on(bus, (input) => {
-        Object.entries(event).forEach(([type, fn]) => {
-          if (fn(input)) EventEmitter.emit('$system', { type, event: input, socket });
-        });
+        const [type] = Object.entries(events).find(([k, fn]) => fn(input));
+        if (type) EventEmitter.emit('$system', { type, event: input, socket });
       });
     });
   }
@@ -37,8 +38,7 @@ EventEmitter.on('$system', ({ type: systemType, socket }) => {
 
 // Start server
 (async () => {
-  const { server = {} } = config;
-  new Server().listen(server.port || 3003);
-  await $db.connect();
+  await redis.connect();
+  $server.listen(config.server.port || 3003);
   EventEmitter.emit('$system', { type: '$ready' });
 })();

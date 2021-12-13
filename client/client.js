@@ -23,7 +23,7 @@ socket.on('query', (event, cb) => {
 });
 
 socket.on('data', (event) => {
-  terminal(event);
+  terminal(`\n${event}`);
   // terminal.eraseLine(); // Erase current writing
   // terminal.insertLine(1).nextLine(1);
   // terminal(event);
