@@ -1,8 +1,10 @@
 import data from './config.data';
-import events from './config.events';
+import eventBus from './config.eventBus';
+import eventListeners from './config.eventListeners';
 
 export default {
   data,
-  events,
+  eventBus,
+  eventListeners,
   server: { port: 3003 },
 };

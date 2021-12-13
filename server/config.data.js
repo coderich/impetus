@@ -1,10 +1,18 @@
+import Chance from 'chance';
+
+const chance = new Chance();
+
 export default {
   rooms: {
     a: {
-      exits: { n: 'room.b' },
+      name: 'Hallway South',
+      description: chance.paragraph(),
+      exits: { n: 'b' },
     },
     b: {
-      exits: { s: 'room.a' },
+      name: 'Hallway North',
+      description: chance.paragraph(),
+      exits: { s: 'a' },
     },
   },
 

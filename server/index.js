@@ -1,4 +1,3 @@
-// import JSONLogic from 'json-logic-js';
 import Data from './src/Data';
 import Redis from './src/Redis';
 import Server from './src/Server';
@@ -12,13 +11,28 @@ const $data = new Data(config.data);
 
 // The entire engine is event driven
 EventEmitter.on('$system', ({ type, socket, event }) => {
-  const { events = {} } = config;
-  const listeners = events[type] || [];
+  const { data, eventListeners = {} } = config;
+  const listeners = eventListeners[type] || [];
+
   return promiseChain(listeners.map(listener => () => {
     const method = Array.isArray(listener) ? 'all' : 'resolve';
     const $emit = (t, e) => EventEmitter.emit('$system', { type: t, socket, event: e });
-    return Promise[method](listener({ $db, $data, $emit, socket, event }));
+    return Promise[method](listener({ $db, $data, $emit, socket, event, data }));
   }));
+});
+
+EventEmitter.on('$system', ({ type: systemType, socket }) => {
+  if (systemType === '$socket:connection') {
+    const { eventBus = {} } = config;
+
+    Object.entries(eventBus).forEach(([bus, event]) => {
+      socket.on(bus, (input) => {
+        Object.entries(event).forEach(([type, fn]) => {
+          if (fn(input)) EventEmitter.emit('$system', { type, event: input, socket });
+        });
+      });
+    });
+  }
 });
 
 // Start server
@@ -26,5 +40,5 @@ EventEmitter.on('$system', ({ type, socket, event }) => {
   const { server = {} } = config;
   new Server().listen(server.port || 3003);
   await $db.connect();
-  EventEmitter.emit('$system', { type: '$server:ready' });
+  EventEmitter.emit('$system', { type: '$ready' });
 })();

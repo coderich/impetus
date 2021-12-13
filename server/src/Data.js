@@ -12,7 +12,8 @@ export default class Data {
   }
 
   set(key, value) {
-    return set(this.data, key, value);
+    set(this.data, key, value);
+    return value;
   }
 
   del(key) {
@@ -31,7 +32,7 @@ export default class Data {
     return pull(this.get(key, []), value);
   }
 
-  inc(key, number) {
-    return this.set(key, this.get(key, 0) + number);
+  inc(key, by = 1) {
+    return this.set(key, this.get(key, 0) + by);
   }
 }
