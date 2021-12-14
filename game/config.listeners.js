@@ -16,7 +16,7 @@ export default {
         const id = await $db.inc('autoIncrement');
         socket.data.Player = await $db.set(`Player.${id}`, { id, name, room: 'Room.a' });
         await socket.data.Player.toRoom({ $db, socket, room: 'Room.a' });
-        socket.data.Player.scan({ $model: socket.data.Player, socket });
+        socket.data.Player.scan({ $this: socket.data.Player, socket });
       });
     }
   },

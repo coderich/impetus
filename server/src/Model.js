@@ -9,7 +9,8 @@ export default class Model {
   constructor(dao, key, value, model = {}) {
     const config = { writable: true, enumerable: false, configurable: true };
     const root = key.split('.').slice(0, 2);
-    value.id = root.join('.');
+    value.$id = root.join('.');
+    [value.$type] = root;
 
     /**
      * Here we re-define the DAO methods to allow relative path queries
@@ -27,12 +28,12 @@ export default class Model {
     }, {}));
 
     /**
-     * Here we attach user-defined methods and curry in $model and $dao
+     * Here we attach user-defined methods and curry in $this and $dao
      */
     Object.defineProperties(value, Object.entries(model).reduce((prev, [k, v]) => {
       return Object.assign(prev, {
         [k]: {
-          value: event => v(Object.assign({}, event, { $dao: dao, $model: value })),
+          value: event => v(Object.assign({}, event, { $dao: dao, $this: value })),
           ...config,
         },
       });

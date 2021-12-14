@@ -1,6 +1,4 @@
-import Chance from 'chance';
-
-const chance = new Chance();
+import { chance } from './service';
 
 export default {
   Room: {
@@ -13,6 +11,16 @@ export default {
       name: 'Hallway North',
       description: chance.paragraph(),
       exits: { s: 'Room.a' },
+      spawn: ['1d5000+1000', '1d2', 'Creature.ant', 'Creature.rat'],
+    },
+  },
+
+  Creature: {
+    ant: {
+      name: 'ant',
+    },
+    rat: {
+      name: 'rat',
     },
   },
 

@@ -29,13 +29,25 @@ export default async (config) => {
     if (type === '$socket:connection') {
       Object.entries(config.translators).forEach(([on, directive]) => {
         socket.on(on, (event) => {
-          const [path] = Object.entries(directive).find(([k, fn]) => fn(event));
+          Object.entries(directive).some(([path, fn]) => {
+            const value = fn(event.trim());
 
-          if (path) {
-            const [root, method] = path.split('.');
-            const $model = socket.data[root];
-            $model[method]({ $model, $db, $data, socket, event });
-          }
+            if (value) {
+              const [root, method] = path.split('.');
+              const $this = socket.data[root];
+              $this[method]({ $this, $db, $data, socket, event: value });
+              return true;
+            }
+
+            return false;
+          });
+          // const [path] = Object.entries(directive).find(([k, fn]) => fn(event));
+
+          // if (path) {
+          //   const [root, method] = path.split('.');
+          //   const $this = socket.data[root];
+          //   $this[method]({ $this, $db, $data, socket, event });
+          // }
         });
       });
     }
