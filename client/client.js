@@ -1,4 +1,4 @@
-const { io } = require("socket.io-client");
+const { io } = require('socket.io-client');
 const { terminal } = require('terminal-kit');
 
 let input;
@@ -33,31 +33,12 @@ socket.on('data', (event) => {
 inputField();
 
 terminal.on('key', (name, matches, data) => {
-  const { code } = data;
-
   switch (name) {
     case 'CTRL_C': {
       terminal.grabInput(false);
       process.exit(0);
       break;
     }
-    // case 'BACKSPACE': {
-    //   terminal.backDelete();
-    //   buffer.slice(0, -1);
-    //   break;
-    // }
-    // case 'ENTER': {
-    //   emitter.emit('input', buffer);
-    //   // socket.emit('data', buffer);
-    //   // terminal.scrollUp(1).insertLine(1).nextLine(1);
-    //   buffer = '';
-    //   break;
-    // }
-    // default: {
-    //   if (code > 31 && code < 127) {
-    //     buffer += name;
-    //     terminal(name);
-    //   }
-    // }
+    default: break;
   }
 });

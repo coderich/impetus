@@ -1,35 +1,48 @@
+import Dao from './src/Dao';
+import Data from './src/Data';
+import Redis from './src/Redis';
+import Server from './src/Server';
 import EventEmitter from './src/EventEmitter';
-import { $db, $data, $server, redis, config } from './src/Service';
 
-// The entire engine is event driven
-EventEmitter.on('$system', ({ type, socket, event }) => {
-  const listener = config.listeners[type];
+export default async (config) => {
+  // Normalize config
+  Object.entries(config).reduce((prev, [key, value]) => Object.assign(prev, { [key]: value || {} }), config);
 
-  if (listener) {
-    const $emit = (t, e) => EventEmitter.emit('$system', { type: t, socket, event: e });
-    listener({ $db, $data, $emit, socket, event, data: config.data });
-  }
-});
+  // Create instances
+  const data = new Data(config.data);
+  const redis = new Redis(config.redis);
+  const $db = new Dao(redis, config.models);
+  const $data = new Dao(data, config.models);
+  const $server = new Server(config.server);
 
-EventEmitter.on('$system', ({ type, socket }) => {
-  if (type === '$socket:connection') {
-    Object.entries(config.translators).forEach(([on, directive]) => {
-      socket.on(on, (event) => {
-        const [path] = Object.entries(directive).find(([k, fn]) => fn(event));
+  // The entire engine is event driven
+  EventEmitter.on('$system', ({ type, socket, event }) => {
+    const listener = config.listeners[type];
 
-        if (path) {
-          const [root, method] = path.split('.');
-          const $model = socket.data[root];
-          $model[method]({ $model, $db, $data, socket, event });
-        }
+    if (listener) {
+      const $emit = (t, e) => EventEmitter.emit('$system', { type: t, socket, event: e });
+      listener({ $db, $data, $emit, socket, event, data: config.data });
+    }
+  });
+
+  EventEmitter.on('$system', ({ type, socket }) => {
+    if (type === '$socket:connection') {
+      Object.entries(config.translators).forEach(([on, directive]) => {
+        socket.on(on, (event) => {
+          const [path] = Object.entries(directive).find(([k, fn]) => fn(event));
+
+          if (path) {
+            const [root, method] = path.split('.');
+            const $model = socket.data[root];
+            $model[method]({ $model, $db, $data, socket, event });
+          }
+        });
       });
-    });
-  }
-});
+    }
+  });
 
-// Start server
-(async () => {
+  // Start server
   await redis.connect();
   $server.listen(config.server.port || 3003);
   EventEmitter.emit('$system', { type: '$ready' });
-})();
+};

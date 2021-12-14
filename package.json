@@ -1,0 +1,29 @@
+{
+  "name": "impetus",
+  "author": "Richard Livolsi",
+  "version": "1.0.0",
+  "license": "ISC",
+  "description": "Impetus",
+  "scripts": {
+    "test": "jest",
+    "start": "node -r esm game/index.js"
+  },
+  "dependencies": {
+    "chance": "^1.1.8",
+    "esm": "^3.2.25"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.4",
+    "@babel/plugin-proposal-class-properties": "^7.8.3",
+    "@babel/plugin-proposal-object-rest-spread": "^7.8.3",
+    "@babel/plugin-syntax-jsx": "^7.8.3",
+    "@babel/plugin-transform-async-to-generator": "^7.8.3",
+    "@babel/plugin-transform-react-jsx": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.8.3",
+    "@babel/preset-env": "^7.8.4",
+    "eslint": "^5.14.1",
+    "eslint-config-airbnb": "^17.1.1",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3"
+  }
+}
