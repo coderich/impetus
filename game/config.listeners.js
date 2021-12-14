@@ -7,7 +7,7 @@ export default {
     return Object.entries(data).map(([model, definition]) => $db.set(model, definition));
   },
 
-  '$socket:connection': async ({ $db, $emit, socket }) => {
+  '$socket:connection': async ({ $db, socket }) => {
     const { handshake: { query } } = socket;
     const { uid } = query;
 

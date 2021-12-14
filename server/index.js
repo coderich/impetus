@@ -32,7 +32,7 @@ export default async (config) => {
           Object.entries(directive).some(([path, fn]) => {
             const value = fn(event.trim());
 
-            if (value) {
+            if (value != null) {
               const [root, method] = path.split('.');
               const $this = socket.data[root];
               $this[method]({ $this, $db, $data, socket, event: value });
@@ -41,13 +41,6 @@ export default async (config) => {
 
             return false;
           });
-          // const [path] = Object.entries(directive).find(([k, fn]) => fn(event));
-
-          // if (path) {
-          //   const [root, method] = path.split('.');
-          //   const $this = socket.data[root];
-          //   $this[method]({ $this, $db, $data, socket, event });
-          // }
         });
       });
     }

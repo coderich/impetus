@@ -2,6 +2,10 @@ import { isDirection } from './config.translators';
 
 export default {
   Room: {
+    scan: ({ $this, units = [] }) => {
+      return `^c${$this.name}\n${units.length ? `^mAlso here: ${units.map(u => u.name).join(', ')}\n` : ''}^gExits: ${Object.keys($this.exits).join(', ')}: `;
+    },
+
     describe: ({ $this, units = [] }) => {
       return `^c${$this.name}\n\t^:${$this.description}\n${units.length ? `^mAlso here: ${units.map(u => u.name).join(', ')}\n` : ''}^gExits: ${Object.keys($this.exits).join(', ')}: `;
     },
@@ -20,20 +24,28 @@ export default {
       await $this.del('room');
     },
 
-    scan: async ({ $this, socket }) => {
+    scan: async ({ $this, $flow, socket }) => {
+      // return $flow.action(async () => {
       const room = await $this.hydrate('room');
       const units = await room.hydrate('units').then(arr => arr.filter(el => el.$id !== $this.$id));
-      socket.emit('data', room.describe({ units }));
+      socket.emit('data', room.scan({ units }));
+      // });
     },
 
     look: async ({ $this, socket, event: target }) => {
-      const room = await $this.hydrate('room');
+      // No target means look in room
+      if (target === '') {
+        const room = await $this.hydrate('room');
+        const units = await room.hydrate('units').then(arr => arr.filter(el => el.$id !== $this.$id));
+        return socket.emit('data', room.describe({ units }));
+      }
 
       // Direction check
       if (isDirection(target)) {
+        const room = await $this.hydrate('room');
         const to = await room.hydrate(`exits.${target}`);
         if (to) return socket.emit('data', to.describe({ units: await to.hydrate('units') }));
-        return socket.emit('data', 'You idiot\n');
+        return socket.emit('data', 'You stare off into a wall...\n');
       }
     },
 
