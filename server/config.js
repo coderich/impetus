@@ -1,13 +1,13 @@
 import data from './config.data';
 import models from './config.models';
-import eventBus from './config.eventBus';
-import eventListeners from './config.eventListeners';
+import listeners from './config.listeners';
+import translators from './config.translators';
 
 export default {
   data,
   models,
-  eventBus,
-  eventListeners,
+  listeners,
+  translators,
   server: { port: 3003 },
   redis: { name: 'impetus' },
 };

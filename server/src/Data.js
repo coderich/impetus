@@ -32,7 +32,7 @@ export default class Data {
     return this.set(key, this.get(key, 0) + by);
   }
 
-  hydrate(key) {
-    return map(this.get(key), li => this.get(li));
+  hydrate(key, prefix) {
+    return map(this.get(key), li => this.get([prefix, li].filter(Boolean).join('.')));
   }
 }

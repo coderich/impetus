@@ -32,15 +32,16 @@ export default class Redis {
   push(key, value) {
     const [root, ...field] = key.split('.');
     const id = `${this.prefix}${root}`;
-    return this.client.json.arrAppend(id, `.${field.join('.')}`, value);
+    return this.client.json.arrAppend(id, `.${field.join('.')}`, value).catch(() => this.set(key, [value]));
   }
 
-  async pull(key, value) {
+  pull(key, value) {
     const [root, ...field] = key.split('.');
     const id = `${this.prefix}${root}`;
-    const index = await this.client.json.arrindex(id, `.${field.join('.')}`, value);
-    if (index < 0) return null;
-    return this.client.json.arrPop(id, `.${field.join('.')}`, index);
+    return this.client.json.arrIndex(id, `.${field.join('.')}`, value).then((index) => {
+      if (index < 0) return null;
+      return this.client.json.arrPop(id, `$.${field.join('.')}`, index);
+    });
   }
 
   inc(key, by = 1) {
@@ -49,7 +50,7 @@ export default class Redis {
     return this.client.json.numIncrBy(id, `.${field.join('.')}`, by);
   }
 
-  hydrate(key) {
-    return this.get(key).then(value => map(value, li => this.get(li), true));
+  hydrate(key, prefix) {
+    return this.get(key).then(value => map(value, li => this.get([prefix, li].filter(Boolean).join('.')), true));
   }
 }

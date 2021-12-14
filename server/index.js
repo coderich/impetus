@@ -1,23 +1,9 @@
-import DAO from './src/DAO';
-import Data from './src/Data';
-import Redis from './src/Redis';
-import Server from './src/Server';
 import EventEmitter from './src/EventEmitter';
-import config from './config';
-
-// Ensure config
-['data', 'models', 'server', 'eventBus', 'eventListeners', 'redis'].forEach(key => (config[key] = config[key] || {}));
-
-// Instantiate classes
-const data = new Data(config.data);
-const redis = new Redis(config.redis);
-const $db = new DAO(redis, config.models);
-const $data = new DAO(data, config.models);
-const $server = new Server(config.server);
+import { $db, $data, $server, redis, config } from './src/Service';
 
 // The entire engine is event driven
 EventEmitter.on('$system', ({ type, socket, event }) => {
-  const listener = config.eventListeners[type];
+  const listener = config.listeners[type];
 
   if (listener) {
     const $emit = (t, e) => EventEmitter.emit('$system', { type: t, socket, event: e });
@@ -25,12 +11,17 @@ EventEmitter.on('$system', ({ type, socket, event }) => {
   }
 });
 
-EventEmitter.on('$system', ({ type: systemType, socket }) => {
-  if (systemType === '$socket:connection') {
-    Object.entries(config.eventBus).forEach(([bus, events]) => {
-      socket.on(bus, (input) => {
-        const [type] = Object.entries(events).find(([k, fn]) => fn(input));
-        if (type) EventEmitter.emit('$system', { type, event: input, socket });
+EventEmitter.on('$system', ({ type, socket }) => {
+  if (type === '$socket:connection') {
+    Object.entries(config.translators).forEach(([on, directive]) => {
+      socket.on(on, (event) => {
+        const [path] = Object.entries(directive).find(([k, fn]) => fn(event));
+
+        if (path) {
+          const [root, method] = path.split('.');
+          const $model = socket.data[root];
+          $model[method]({ $model, $db, $data, socket, event });
+        }
       });
     });
   }
