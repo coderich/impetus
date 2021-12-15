@@ -9,5 +9,5 @@ export default {
   listeners,
   translators,
   server: { port: 3003 },
-  redis: { name: 'impetus' },
+  redis: { name: 'impetus', keyDepth: 1 },
 };

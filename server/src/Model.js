@@ -1,3 +1,4 @@
+import Stream from './Stream';
 import { daoMethods } from './Util';
 
 /**
@@ -6,23 +7,24 @@ import { daoMethods } from './Util';
  * Converts the passed in value to a "model" with DAO + user-defined methods attached
  */
 export default class Model {
-  constructor(dao, key, value, model = {}) {
-    const config = { writable: true, enumerable: false, configurable: true };
+  constructor($dao, instance, key, value, model = {}) {
     const root = key.split('.').slice(0, 2);
     value.$id = root.join('.');
     [value.$type] = root;
+    return Model.wrapInstance($dao, value, instance, model, root);
+  }
 
+  static wrapInstance($dao, wrapper, instance, model, root) {
     /**
      * Here we re-define the DAO methods to allow relative path queries
      */
-    Object.defineProperties(value, daoMethods.reduce((prev, daoMethod) => {
+    Object.defineProperties(wrapper, daoMethods.reduce((prev, daoMethod) => {
       return Object.assign(prev, {
         [daoMethod]: {
           value: (path, ...args) => {
             const fullpath = root.concat(path).filter(Boolean).join('.');
-            return dao[daoMethod](`${fullpath}`, ...args);
+            return instance[daoMethod](`${fullpath}`, ...args);
           },
-          ...config,
         },
       });
     }, {}));
@@ -30,11 +32,10 @@ export default class Model {
     /**
      * Here we attach user-defined methods and curry in $this and $dao
      */
-    Object.defineProperties(value, Object.entries(model).reduce((prev, [k, v]) => {
+    Object.defineProperties(wrapper, Object.entries(model).reduce((prev, [k, v]) => {
       return Object.assign(prev, {
         [k]: {
-          value: event => v(Object.assign({}, event, { $dao: dao, $this: value })),
-          ...config,
+          value: event => v(Object.assign({}, event, { $dao, $this: wrapper })),
         },
       });
     }, {}));
@@ -42,13 +43,15 @@ export default class Model {
     /**
      * Additional convenience functions
      */
-    Object.defineProperties(value, {
+    Object.defineProperties(wrapper, {
       ref: {
-        value: (k, prefix) => value.get(k).then(ref => dao.ref([prefix, ref].filter(Boolean).join('.'))),
-        ...config,
+        value: (k, prefix) => wrapper.get(k).then(ref => instance.ref([prefix, ref].filter(Boolean).join('.'))),
+      },
+      stream: {
+        value: () => new Stream(wrapper),
       },
     });
 
-    return value;
+    return wrapper;
   }
 }

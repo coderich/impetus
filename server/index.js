@@ -11,8 +11,9 @@ export default async (config) => {
   // Create instances
   const data = new Data(config.data);
   const redis = new Redis(config.redis);
-  const $db = new Dao(redis, config.models);
-  const $data = new Dao(data, config.models);
+  const $dao = new Dao(redis, data, config.models);
+  // const $db = new Dao(redis, config.models);
+  // const $data = new Dao(data, config.models);
   const $server = new Server(config.server);
 
   // The entire engine is event driven
@@ -21,7 +22,7 @@ export default async (config) => {
 
     if (listener) {
       const $emit = (t, e) => EventEmitter.emit('$system', { type: t, socket, event: e });
-      listener({ $db, $data, $emit, socket, event, data: config.data });
+      listener({ $dao, $emit, socket, event, data: config.data });
     }
   });
 
@@ -35,7 +36,7 @@ export default async (config) => {
             if (value != null) {
               const [root, method] = path.split('.');
               const $this = socket.data[root];
-              $this[method]({ $this, $db, $data, socket, event: value });
+              $this[method]({ $this, $dao, socket, event: value });
               return true;
             }
 

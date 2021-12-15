@@ -12,15 +12,15 @@ export default {
   },
 
   Player: {
-    toRoom: async ({ $this, $db, socket, room }) => {
+    toRoom: async ({ $this, $dao, socket, room }) => {
       socket.join(room);
-      await $db.push(`${room}.units`, $this.$id);
+      await $dao.db.push(`${room}.units`, $this.$id);
       await $this.set('room', room);
     },
 
-    fromRoom: async ({ $this, $db, socket, room }) => {
+    fromRoom: async ({ $this, $dao, socket, room }) => {
       socket.leave(room);
-      await $db.pull(`${room}.units`, $this.$id);
+      await $dao.db.pull(`${room}.units`, $this.$id);
       await $this.del('room');
     },
 
@@ -49,7 +49,7 @@ export default {
       }
     },
 
-    move: async ({ $this, $db, socket, event: dir }) => {
+    move: async ({ $this, $dao, socket, event: dir }) => {
       const from = await $this.hydrate('room');
       const to = from.exits[dir];
 
@@ -58,11 +58,11 @@ export default {
 
         // Leave room
         socket.broadcast.to(from.$id).emit('data', `${player.name} has left the room.\n`);
-        await player.fromRoom({ $db, socket, room: from.$id });
+        await player.fromRoom({ $dao, socket, room: from.$id });
 
         // Enter room
         socket.broadcast.to(to).emit('data', `${player.name} has entered the room.\n`);
-        await player.toRoom({ $db, socket, room: to });
+        await player.toRoom({ $dao, socket, room: to });
 
         // Player scan
         $this.scan({ socket });

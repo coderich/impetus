@@ -2,10 +2,15 @@ import { map, daoMethods } from './Util';
 import Model from './Model';
 
 export default class Dao {
-  constructor(instance, models) {
-    const config = { writable: true, enumerable: false, configurable: true };
+  constructor(db, data, models) {
+    const $dao = { db: {}, data: {} };
+    Dao.wrapInstance($dao, $dao.db, db, models);
+    Dao.wrapInstance($dao, $dao.data, data, models);
+    return $dao;
+  }
 
-    const dao = Object.defineProperties({}, daoMethods.reduce((prev, method) => {
+  static wrapInstance($dao, wrapper, instance, models) {
+    Object.defineProperties(wrapper, daoMethods.filter(method => method !== 'hydrate').reduce((prev, method) => {
       return Object.assign(prev, {
         [method]: {
           value: (key, ...rest) => Promise.resolve(instance[method](key, ...rest)).then((value) => {
@@ -13,27 +18,24 @@ export default class Dao {
             if (typeof value !== 'object') return value;
             if (Array.isArray(value)) return value;
             const [root] = key.split('.');
-            return new Model(dao, key, value, models[root]);
+            return new Model($dao, wrapper, key, value, models[root]);
           }),
-          ...config,
         },
       });
     }, {}));
 
-    Object.defineProperties(dao, {
+    Object.defineProperties(wrapper, {
       ref: {
         value: (key) => {
           const [root] = key.split('.');
-          return new Model(dao, key, {}, models[root]);
+          return new Model(wrapper, key, {}, models[root]);
         },
-        ...config,
       },
       hydrate: {
-        value: (key, prefix) => instance.get(key).then(value => map(value, li => dao.get([prefix, li].filter(Boolean).join('.')), true)),
-        ...config,
+        value: (key, prefix) => instance.get(key).then(value => map(value, li => wrapper.get([prefix, li].filter(Boolean).join('.')), true)),
       },
     });
 
-    return dao;
+    return wrapper;
   }
 }
