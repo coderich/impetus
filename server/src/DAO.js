@@ -2,10 +2,11 @@ import { map, daoMethods } from './Util';
 import Model from './Model';
 
 export default class Dao {
-  constructor(db, data, models) {
-    const $dao = { db: {}, data: {} };
+  constructor(db, ram, config, models) {
+    const $dao = { db: {}, ram: {}, config: {} };
     Dao.wrapInstance($dao, $dao.db, db, models);
-    Dao.wrapInstance($dao, $dao.data, data, models);
+    Dao.wrapInstance($dao, $dao.ram, ram, models);
+    Dao.wrapInstance($dao, $dao.config, config, models);
     return $dao;
   }
 

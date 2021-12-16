@@ -1,7 +1,8 @@
 export default {
-  $ready: async ({ $dao, data }) => {
+  $ready: async ({ $dao }) => {
     await $dao.db.set('autoIncrement', 0);
-    return Promise.all(Object.entries(data.Room).map(([id, definition]) => $dao.db.set(`Room.${id}`, definition))).then((rooms) => {
+    const roomConfig = await $dao.config.get('Room');
+    return Promise.all(Object.entries(roomConfig).map(([id, definition]) => $dao.db.set(`Room.${id}`, definition))).then((rooms) => {
       return Promise.all(rooms.map(room => room.init()));
     });
   },

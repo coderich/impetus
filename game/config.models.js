@@ -29,7 +29,7 @@ export default {
         const blueprint = randomElement(models);
         const [root] = blueprint.split('.');
         const key = `${root}.${id}`;
-        const data = await $dao.data.get(blueprint);
+        const data = await $dao.config.get(blueprint);
         data.room = $this.$id;
         const unit = await $dao.db.set(key, data);
         await unit.init();
@@ -134,15 +134,20 @@ export default {
   },
 
   Creature: {
-    init: ({ $this }) => {
+    init: async ({ $this, $dao }) => {
       $this.scan();
+      const room = await $dao.db.ref($this.room);
+
+      room.flow.get('enter').subscribe({
+        next: () => $this.scan(),
+      });
     },
 
     scan: async ({ $this }) => {
       const room = await $this.hydrate('room');
       const units = await room.hydrate('units', []);
-      const players = units.filter(unit => unit.$type === 'Player');
-      console.log(players);
+      const target = randomElement(units.filter(unit => unit.$type === 'Player'));
+      if (target) $this.attack({ target });
     },
 
     move: () => {
@@ -157,8 +162,29 @@ export default {
 
     },
 
-    attack: () => {
+    attack: ({ $this, $dao, target }) => {
+      const stream = $this.flow.get('attack');
+      if (stream.actions.length) return;
 
+      stream.pipe(
+        // Prep engagement
+        () => timeout(1000),
+
+        // Target check
+        async ({ $action }) => {
+          const $target = await target.get();
+          if ($target.room !== $this.room) $action.abort();
+          return { $target };
+        },
+
+        // Attack
+        async ({ $target }) => {
+          return timeout(1500); // Mandatory recoil at this point
+        },
+      ).subscribe({
+        error: () => $this.scan(),
+        complete: () => $this.scan(),
+      });
     },
   },
 };

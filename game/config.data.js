@@ -11,7 +11,7 @@ export default {
       name: 'Hallway North',
       description: chance.paragraph(),
       exits: { s: 'Room.a' },
-      spawns: ['1d1000+1000', '1d2', 'Creature.ant', 'Creature.rat'],
+      spawns: ['1d1000+1000', '1d3', 'Creature.ant', 'Creature.rat'],
     },
   },
 

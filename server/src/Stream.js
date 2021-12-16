@@ -14,13 +14,12 @@ export default class Stream {
     this.actions = [];
     this.subject = new Subject();
     this.observable = this.subject.pipe(
-      tap((hook) => { if (hook === 'abort') throw new Error(); }),
-      concatMap(action => action.exec()),
+      tap((hook) => { if (hook === 'abort') { throw new Error(); } }),
+      concatMap(action => action.exec().finally(() => { this.actions.shift(); })),
       retry(),
       publish()
     );
     this.observable.connect();
-    this.observable.subscribe({ next: () => this.actions.shift() });
   }
 
   pipe(...unitsOfWork) {
@@ -33,14 +32,9 @@ export default class Stream {
   repeat(...unitsOfWork) {
     const action = this.pipe(...unitsOfWork);
 
-    const subscription = action.subscribe({
-      error: () => {
-        subscription.unsubscribe();
-      },
-      complete: () => {
-        subscription.unsubscribe();
-        this.repeat(...unitsOfWork);
-      },
+    action.subscribe({
+      error: () => {},
+      complete: () => { this.repeat(...unitsOfWork); },
     });
 
     return action;

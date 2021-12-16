@@ -58,7 +58,7 @@ export default class Model {
      */
     Object.defineProperties(wrapper, {
       ref: {
-        value: (k, prefix) => wrapper.get(k).then(ref => instance.ref([prefix, ref].filter(Boolean).join('.'))),
+        value: k => wrapper.get(k).then(ref => instance.ref(ref)),
         ...config,
       },
       flow: {

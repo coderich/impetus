@@ -4,29 +4,28 @@ import Redis from './src/Redis';
 import Server from './src/Server';
 import EventEmitter from './src/EventEmitter';
 
-export default async (config) => {
-  // Normalize config
-  Object.entries(config).reduce((prev, [key, value]) => Object.assign(prev, { [key]: value || {} }), config);
+export default async (gameConfig) => {
+  // Normalize Game Config
+  Object.entries(gameConfig).reduce((prev, [key, value]) => Object.assign(prev, { [key]: value || {} }), gameConfig);
 
   // Create instances
-  const data = new Data(config.data);
-  const redis = new Redis(config.redis);
-  const $dao = new Dao(redis, data, config.models);
-  const $server = new Server(config.server);
+  const redis = new Redis(gameConfig.redis);
+  const $dao = new Dao(redis, new Data({}), new Data(gameConfig.data), gameConfig.models);
+  const $server = new Server(gameConfig.server);
 
   // The entire engine is event driven
   EventEmitter.on('$system', ({ type, socket, event }) => {
-    const listener = config.listeners[type];
+    const listener = gameConfig.listeners[type];
 
     if (listener) {
       const $emit = (t, e) => EventEmitter.emit('$system', { type: t, socket, event: e });
-      listener({ $dao, $emit, socket, event, data: config.data });
+      listener({ $dao, $emit, socket, event });
     }
   });
 
   EventEmitter.on('$system', ({ type, socket }) => {
     if (type === '$socket:connection') {
-      Object.entries(config.translators).forEach(([on, directive]) => {
+      Object.entries(gameConfig.translators).forEach(([on, directive]) => {
         socket.on(on, (event) => {
           Object.entries(directive).some(([path, fn]) => {
             const value = fn(event.trim());
@@ -47,6 +46,6 @@ export default async (config) => {
 
   // Start server
   await redis.connect();
-  $server.listen(config.server.port || 3003);
+  $server.listen(gameConfig.server.port || 3003);
   EventEmitter.emit('$system', { type: '$ready' });
 };
