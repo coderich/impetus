@@ -1,5 +1,7 @@
 import { isDirection } from './config.translators';
 
+const timeout = ms => new Promise(res => setTimeout(res, ms));
+
 export default {
   Room: {
     scan: ({ $this, units = [] }) => {
@@ -50,25 +52,33 @@ export default {
     },
 
     move: async ({ $this, $dao, socket, event: dir }) => {
-      const from = await $this.hydrate('room');
-      const to = from.exits[dir];
+      $this.flow.get('move').pipe(
+        async ({ $stream }) => {
+          const player = await $this.get();
+          const from = await $this.hydrate('room');
+          const to = from.exits[dir];
 
-      if (to) {
-        const player = await $this.get();
+          if (!to) {
+            socket.emit('data', '^rno exit in that direction!\n');
+            $stream.abort();
+          }
 
-        // Leave room
-        socket.broadcast.to(from.$id).emit('data', `${player.name} has left the room.\n`);
-        await player.fromRoom({ $dao, socket, room: from.$id });
+          return { player, from, to };
+        },
+        () => timeout(1500),
+        async ({ player, from, to }) => {
+          // Leave room
+          socket.broadcast.to(from.$id).emit('data', `${player.name} has left the room.\n`);
+          await player.fromRoom({ $dao, socket, room: from.$id });
 
-        // Enter room
-        socket.broadcast.to(to).emit('data', `${player.name} has entered the room.\n`);
-        await player.toRoom({ $dao, socket, room: to });
+          // Enter room
+          socket.broadcast.to(to).emit('data', `${player.name} has entered the room.\n`);
+          await player.toRoom({ $dao, socket, room: to });
 
-        // Player scan
-        $this.scan({ socket });
-      } else {
-        socket.emit('data', '^rno exit in that direction!\n');
-      }
+          // Player scan
+          return $this.scan({ socket });
+        }
+      );
     },
 
     chat: async ({ $this, socket, event }) => {

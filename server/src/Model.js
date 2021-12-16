@@ -1,4 +1,4 @@
-import Stream from './Stream';
+import Flow from './Flow';
 import { daoMethods } from './Util';
 
 /**
@@ -47,8 +47,8 @@ export default class Model {
       ref: {
         value: (k, prefix) => wrapper.get(k).then(ref => instance.ref([prefix, ref].filter(Boolean).join('.'))),
       },
-      stream: {
-        value: () => new Stream(wrapper),
+      flow: {
+        get() { return new Flow(wrapper); },
       },
     });
 

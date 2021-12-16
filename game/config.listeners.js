@@ -12,7 +12,7 @@ export default {
     const { uid } = query;
 
     if (!uid) {
-      socket.emit('query', 'Welcome to Impetus!\nWhat shall I call you? ', async (name) => {
+      socket.emit('query', 'Welcome traveler, what is your name? ', async (name) => {
         const id = await $dao.db.inc('autoIncrement');
         socket.data.Player = await $dao.db.set(`Player.${id}`, { id, name, room: 'Room.a' });
         await socket.data.Player.toRoom({ $dao, socket, room: 'Room.a' });

@@ -12,8 +12,6 @@ export default async (config) => {
   const data = new Data(config.data);
   const redis = new Redis(config.redis);
   const $dao = new Dao(redis, data, config.models);
-  // const $db = new Dao(redis, config.models);
-  // const $data = new Dao(data, config.models);
   const $server = new Server(config.server);
 
   // The entire engine is event driven
