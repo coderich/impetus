@@ -13,16 +13,15 @@ export default class Redis {
     return this.client.connect();
   }
 
-  keys(key) {
+  keys(key, prefix = '.') {
     const fields = key.split('.');
     const id = [this.name].concat(fields.splice(0, this.keyDepth)).filter(Boolean);
-    return [id.join('.'), `.${fields.join('.')}`];
+    return [id.join('.'), `${prefix}${fields.join('.')}`];
   }
 
   get(key, defaultValue) {
-    const [root, ...field] = key.split('.');
-    const id = `${this.prefix}${root}`;
-    return this.client.json.get(id, { path: field.join('.') }).then((value = defaultValue) => value).catch(() => defaultValue);
+    const [id, path] = this.keys(key, '');
+    return this.client.json.get(id, { path }).then((value = defaultValue) => value).catch(() => defaultValue);
   }
 
   set(key, value) {

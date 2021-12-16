@@ -4,6 +4,11 @@ import { Subject } from 'rxjs';
 import { tap, concatMap, retry, publish } from 'rxjs/operators';
 import Action from './Action';
 
+/**
+ * Stream
+ *
+ * Part of the Flow->Stream->Action framework to enable more timing/control over asynchronous events.
+ */
 export default class Stream {
   constructor() {
     this.actions = [];
