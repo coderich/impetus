@@ -26,33 +26,35 @@ export default {
       await $this.del('room');
     },
 
-    scan: async ({ $this, $flow, socket }) => {
-      // return $flow.action(async () => {
+    scan: async ({ $this, socket }) => {
       const room = await $this.hydrate('room');
       const units = await room.hydrate('units').then(arr => arr.filter(el => el.$id !== $this.$id));
       socket.emit('data', room.scan({ units }));
-      // });
     },
 
-    look: async ({ $this, socket, event: target }) => {
-      // No target means look in room
-      if (target === '') {
-        const room = await $this.hydrate('room');
-        const units = await room.hydrate('units').then(arr => arr.filter(el => el.$id !== $this.$id));
-        return socket.emit('data', room.describe({ units }));
-      }
+    look: ({ $this, socket, event: target }) => {
+      return $this.flow.get().pipe(
+        async () => {
+          // No target means look in room
+          if (target === '') {
+            const room = await $this.hydrate('room');
+            const units = await room.hydrate('units').then(arr => arr.filter(el => el.$id !== $this.$id));
+            return socket.emit('data', room.describe({ units }));
+          }
 
-      // Direction check
-      if (isDirection(target)) {
-        const room = await $this.hydrate('room');
-        const to = await room.hydrate(`exits.${target}`);
-        if (to) return socket.emit('data', to.describe({ units: await to.hydrate('units') }));
-        return socket.emit('data', 'You stare off into a wall...\n');
-      }
+          // Direction check
+          if (isDirection(target)) {
+            const room = await $this.hydrate('room');
+            const to = await room.hydrate(`exits.${target}`);
+            if (to) return socket.emit('data', to.describe({ units: await to.hydrate('units') }));
+            return socket.emit('data', 'You stare off into a wall...\n');
+          }
+        },
+      );
     },
 
-    move: async ({ $this, $dao, socket, event: dir }) => {
-      $this.flow.get('move').pipe(
+    move: ({ $this, $dao, socket, event: dir }) => {
+      return $this.flow.get().pipe(
         async ({ $stream }) => {
           const player = await $this.get();
           const from = await $this.hydrate('room');
@@ -65,7 +67,7 @@ export default {
 
           return { player, from, to };
         },
-        () => timeout(1500),
+        () => timeout(1000),
         async ({ player, from, to }) => {
           // Leave room
           socket.broadcast.to(from.$id).emit('data', `${player.name} has left the room.\n`);
@@ -81,10 +83,18 @@ export default {
       );
     },
 
-    chat: async ({ $this, socket, event }) => {
-      const player = await $this.get();
-      socket.broadcast.to(player.room).emit('data', `${player.name} says ${event}\n`);
-      socket.emit('data', `You say ${event}\n`);
+    chat: ({ $this, socket, event }) => {
+      return $this.flow.get().pipe(
+        async () => {
+          const player = await $this.get();
+          socket.broadcast.to(player.room).emit('data', `${player.name} says ${event}\n`);
+          socket.emit('data', `You say ${event}\n`);
+        },
+      );
+    },
+
+    none: ({ $this, socket }) => {
+      $this.flow.get().pipe(() => $this.scan({ socket }));
     },
   },
 };
