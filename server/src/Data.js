@@ -6,9 +6,9 @@ export default class Data {
     this.data = data;
   }
 
-  get(key, value) {
+  get(key, defaultValue) {
     if (!key) return this.data;
-    return get(this.data, key, value);
+    return get(this.data, key, defaultValue);
   }
 
   set(key, value) {
@@ -32,7 +32,7 @@ export default class Data {
     return this.set(key, this.get(key, 0) + by);
   }
 
-  hydrate(key, prefix) {
-    return map(this.get(key), li => this.get([prefix, li].filter(Boolean).join('.')));
+  hydrate(key, defaultValue) {
+    return map(this.get(key), li => this.get(li)) || defaultValue;
   }
 }

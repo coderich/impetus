@@ -1,15 +1,15 @@
 import Stream from './Stream';
 
-const modelStreamMap = new WeakMap();
+const modelStreamMap = new Map();
 
 /**
  * Flow
  */
 export default class Flow {
-  constructor(model) {
-    if (!modelStreamMap.has(model)) modelStreamMap.set(model, new Map());
-    this.streamMap = modelStreamMap.get(model);
-    this.modelId = model.$id;
+  constructor(id) {
+    if (!modelStreamMap.has(id)) modelStreamMap.set(id, new Map());
+    this.streamMap = modelStreamMap.get(id);
+    this.modelId = id;
   }
 
   get(id) {

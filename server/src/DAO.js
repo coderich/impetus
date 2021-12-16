@@ -10,6 +10,8 @@ export default class Dao {
   }
 
   static wrapInstance($dao, wrapper, instance, models) {
+    const config = { writable: true, enumerable: false, configurable: true };
+
     Object.defineProperties(wrapper, daoMethods.filter(method => method !== 'hydrate').reduce((prev, method) => {
       return Object.assign(prev, {
         [method]: {
@@ -20,6 +22,7 @@ export default class Dao {
             const [root] = key.split('.');
             return new Model($dao, wrapper, key, value, models[root]);
           }),
+          ...config,
         },
       });
     }, {}));
@@ -28,11 +31,13 @@ export default class Dao {
       ref: {
         value: (key) => {
           const [root] = key.split('.');
-          return new Model(wrapper, key, {}, models[root]);
+          return new Model($dao, wrapper, key, {}, models[root]);
         },
+        ...config,
       },
       hydrate: {
-        value: (key, prefix) => instance.get(key).then(value => map(value, li => wrapper.get([prefix, li].filter(Boolean).join('.')), true)),
+        value: (key, defaultValue) => instance.get(key).then(value => map(value, li => wrapper.get(li), true)).then((value = defaultValue) => value),
+        ...config,
       },
     });
 

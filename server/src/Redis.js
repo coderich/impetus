@@ -53,7 +53,7 @@ export default class Redis {
     return this.client.json.numIncrBy(id, field, by);
   }
 
-  hydrate(key, prefix) {
-    return this.get(key).then(value => map(value, li => this.get([prefix, li].filter(Boolean).join('.')), true));
+  hydrate(key, defaultValue) {
+    return this.get(key).then(value => map(value, li => this.get(li), true)).then((value = defaultValue) => value);
   }
 }

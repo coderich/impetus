@@ -9,12 +9,16 @@ import { daoMethods } from './Util';
 export default class Model {
   constructor($dao, instance, key, value, model = {}) {
     const root = key.split('.').slice(0, 2);
-    value.$id = root.join('.');
-    [value.$type] = root;
+    Object.defineProperties(value, {
+      $id: { value: root.join('.') },
+      $type: { value: root[0] },
+    });
     return Model.wrapInstance($dao, value, instance, model, root);
   }
 
   static wrapInstance($dao, wrapper, instance, model, root) {
+    const config = { writable: true, enumerable: false, configurable: true };
+
     /**
      * Here we re-define the DAO methods to allow relative path queries
      */
@@ -25,6 +29,7 @@ export default class Model {
             const fullpath = root.concat(path).filter(Boolean).join('.');
             return instance[daoMethod](`${fullpath}`, ...args);
           },
+          ...config,
         },
       });
     }, {}));
@@ -36,6 +41,7 @@ export default class Model {
       return Object.assign(prev, {
         [k]: {
           value: event => v(Object.assign({}, event, { $dao, $this: wrapper })),
+          ...config,
         },
       });
     }, {}));
@@ -46,9 +52,11 @@ export default class Model {
     Object.defineProperties(wrapper, {
       ref: {
         value: (k, prefix) => wrapper.get(k).then(ref => instance.ref([prefix, ref].filter(Boolean).join('.'))),
+        ...config,
       },
       flow: {
-        get() { return new Flow(wrapper); },
+        value: new Flow(wrapper.$id),
+        ...config,
       },
     });
 

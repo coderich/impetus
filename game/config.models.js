@@ -1,9 +1,40 @@
 import { isDirection } from './config.translators';
-
-const timeout = ms => new Promise(res => setTimeout(res, ms));
+import { timeout, roll, randomElement } from './service';
 
 export default {
   Room: {
+    init: async ({ $this }) => {
+      const room = await $this.get();
+      if (room.spawns) await room.set('respawnTime', new Date().getTime() + roll(room.spawns[0]));
+
+      $this.flow.get('enter').subscribe({
+        next: async () => {
+          const now = new Date().getTime();
+          const $room = await $this.get();
+
+          if ($room.spawns && now > $room.respawnTime) {
+            const units = await $room.hydrate('units', []);
+            const creatures = units.filter(unit => unit.$type === 'Creature');
+            if (creatures.length === 0) $room.spawn();
+          }
+        },
+      });
+    },
+
+    spawn: ({ $this, $dao }) => {
+      const [delay, num, ...models] = $this.spawns;
+
+      return Promise.all(Array.from(new Array(roll(num))).map(async () => {
+        const id = await $dao.db.inc('autoIncrement');
+        const data = await $dao.data.get(randomElement(models));
+        const key = `${data.$id}.${id}`;
+        const unit = await $dao.db.set(key, data);
+        await unit.init();
+        await $this.push('units', key);
+        await $this.set('respawnTime', new Date().getTime() + roll(delay));
+      }));
+    },
+
     scan: ({ $this, units = [] }) => {
       return `^c${$this.name}\n${units.length ? `^mAlso here: ${units.map(u => u.name).join(', ')}\n` : ''}^gExits: ${Object.keys($this.exits).join(', ')}: `;
     },
@@ -15,9 +46,10 @@ export default {
 
   Player: {
     toRoom: async ({ $this, $dao, socket, room }) => {
-      socket.join(room);
-      await $dao.db.push(`${room}.units`, $this.$id);
-      await $this.set('room', room);
+      socket.join(room.$id);
+      room.flow.get('enter').pipe(() => ({ player: $this }));
+      await room.push('units', $this.$id);
+      await $this.set('room', room.$id);
     },
 
     fromRoom: async ({ $this, $dao, socket, room }) => {
@@ -58,7 +90,7 @@ export default {
         async ({ $stream }) => {
           const player = await $this.get();
           const from = await $this.hydrate('room');
-          const to = from.exits[dir];
+          const to = await from.hydrate(`exits.${dir}`);
 
           if (!to) {
             socket.emit('data', '^rno exit in that direction!\n');
@@ -74,7 +106,7 @@ export default {
           await player.fromRoom({ $dao, socket, room: from.$id });
 
           // Enter room
-          socket.broadcast.to(to).emit('data', `${player.name} has entered the room.\n`);
+          socket.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.\n`);
           await player.toRoom({ $dao, socket, room: to });
 
           // Player scan
@@ -95,6 +127,12 @@ export default {
 
     none: ({ $this, socket }) => {
       $this.flow.get().pipe(() => $this.scan({ socket }));
+    },
+  },
+
+  Creature: {
+    init: ({ $this }) => {
+      console.log($this.name, 'is ready to fight!');
     },
   },
 };

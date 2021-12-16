@@ -15,6 +15,7 @@ export default class Stream {
       publish()
     );
     this.observable.connect();
+    this.observable.subscribe({ next: () => this.actions.shift() });
   }
 
   pipe(...unitsOfWork) {
