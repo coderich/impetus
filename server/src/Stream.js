@@ -30,6 +30,22 @@ export default class Stream {
     return action;
   }
 
+  repeat(...unitsOfWork) {
+    const action = this.pipe(...unitsOfWork);
+
+    const subscription = action.subscribe({
+      error: () => {
+        subscription.unsubscribe();
+      },
+      complete: () => {
+        subscription.unsubscribe();
+        this.repeat(...unitsOfWork);
+      },
+    });
+
+    return action;
+  }
+
   subscribe(...args) {
     return this.observable.subscribe(...args);
   }

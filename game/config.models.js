@@ -26,8 +26,11 @@ export default {
 
       return Promise.all(Array.from(new Array(roll(num))).map(async () => {
         const id = await $dao.db.inc('autoIncrement');
-        const data = await $dao.data.get(randomElement(models));
-        const key = `${data.$id}.${id}`;
+        const blueprint = randomElement(models);
+        const [root] = blueprint.split('.');
+        const key = `${root}.${id}`;
+        const data = await $dao.data.get(blueprint);
+        data.room = $this.$id;
         const unit = await $dao.db.set(key, data);
         await unit.init();
         await $this.push('units', key);
@@ -132,7 +135,30 @@ export default {
 
   Creature: {
     init: ({ $this }) => {
-      console.log($this.name, 'is ready to fight!');
+      $this.scan();
+    },
+
+    scan: async ({ $this }) => {
+      const room = await $this.hydrate('room');
+      const units = await room.hydrate('units', []);
+      const players = units.filter(unit => unit.$type === 'Player');
+      console.log(players);
+    },
+
+    move: () => {
+
+    },
+
+    hunt: () => {
+
+    },
+
+    follow: () => {
+
+    },
+
+    attack: () => {
+
     },
   },
 };

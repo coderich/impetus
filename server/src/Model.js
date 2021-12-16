@@ -9,15 +9,22 @@ import { daoMethods } from './Util';
 export default class Model {
   constructor($dao, instance, key, value, model = {}) {
     const root = key.split('.').slice(0, 2);
-    Object.defineProperties(value, {
-      $id: { value: root.join('.') },
-      $type: { value: root[0] },
-    });
     return Model.wrapInstance($dao, value, instance, model, root);
   }
 
   static wrapInstance($dao, wrapper, instance, model, root) {
     const config = { writable: true, enumerable: false, configurable: true };
+
+    Object.defineProperties(wrapper, {
+      $id: {
+        value: root.join('.'),
+        ...config,
+      },
+      $type: {
+        value: root[0],
+        ...config,
+      },
+    });
 
     /**
      * Here we re-define the DAO methods to allow relative path queries

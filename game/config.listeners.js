@@ -1,11 +1,8 @@
 export default {
   $ready: async ({ $dao, data }) => {
-    // const installed = await $db.get('installed');
-    // if (!installed) $db.set('installed', { ...data, players: {}, autoIncrement: 0 });
-    await $dao.db.set('Player', {});
     await $dao.db.set('autoIncrement', 0);
-    return Promise.all(Object.entries(data).map(([model, definition]) => $dao.db.set(model, definition))).then(() => {
-      return Promise.all(Object.keys(data.Room).map(id => $dao.db.ref(`Room.${id}`).init()));
+    return Promise.all(Object.entries(data.Room).map(([id, definition]) => $dao.db.set(`Room.${id}`, definition))).then((rooms) => {
+      return Promise.all(rooms.map(room => room.init()));
     });
   },
 
