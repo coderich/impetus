@@ -32,6 +32,22 @@ export default class Flow {
     return this.streamMap.delete(key);
   }
 
+  open() {
+    this.streamMap.values.forEach(stream => stream.open());
+  }
+
+  close() {
+    this.streamMap.values.forEach(stream => stream.close());
+  }
+
+  pause() {
+    this.streamMap.values.forEach(stream => stream.pause());
+  }
+
+  resume() {
+    this.streamMap.values.forEach(stream => stream.resume());
+  }
+
   clear() {
     this.streamMap.values.forEach(stream => stream.abort());
     return this.streamMap.clear();

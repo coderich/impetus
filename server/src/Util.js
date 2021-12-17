@@ -1,3 +1,5 @@
+export const timeout = ms => new Promise(res => setTimeout(res, ms));
+
 export const map = (mixed, fn, promise = false) => {
   if (mixed == null) return mixed;
   const isArray = Array.isArray(mixed);

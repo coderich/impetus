@@ -13,18 +13,23 @@ import { tap, concatMap, publish } from 'rxjs/operators';
  */
 export default class Action {
   constructor(stream, ...unitsOfWork) {
+    this.paused = false;
     this.subject = new Subject();
     this.unitsOfWork = unitsOfWork;
     this.params = { $stream: stream, $action: this };
 
     this.observable = this.subject.pipe(
-      tap(hook => (hook === 'abort' ? this.subject.error() : hook)),
-      concatMap((worker) => {
-        return Promise.resolve(worker(this.params)).then((result = this.params) => {
-          this.params = Object.assign({ $stream: stream, $action: this }, result);
-          if (!unitsOfWork.shift() || !unitsOfWork.length) this.subject.complete();
-          return result;
-        });
+      tap((hook) => {
+        if (hook === 'abort') {
+          this.subject.error();
+        }
+      }),
+      concatMap(async (worker) => {
+        if (this.paused) await this.paused;
+        const result = await Promise.resolve(worker(this.params)).then((value = this.params) => value);
+        this.params = Object.assign({ $stream: stream, $action: this }, result);
+        if (!unitsOfWork.shift() || !unitsOfWork.length) this.subject.complete();
+        return result;
       }),
       publish(),
     );
@@ -41,6 +46,14 @@ export default class Action {
 
   subscribe(...args) {
     return this.observable.subscribe(...args);
+  }
+
+  pause() {
+    if (!this.paused) this.paused = new Promise((resolve) => { this.play = resolve; }); // eslint-disable-line no-new
+  }
+
+  resume() {
+    if (this.paused) { this.play(); this.paused = false; }
   }
 
   abort() {
