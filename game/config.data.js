@@ -4,16 +4,16 @@ export default {
   Room: {
     car: {
       name: 'Roadside',
-      description: chance.paragraph(),
+      description: 'In another ^ylife^ I would make you stay',
       exits: { n: 'Room.street' },
     },
     street: {
-      name: 'Dead-End Road',
+      name: 'Side Street',
       description: chance.paragraph(),
       exits: { n: 'Room.house', s: 'Room.car' },
     },
     house: {
-      name: 'Dead-End',
+      name: 'Side Street, Dead End',
       description: chance.paragraph(),
       exits: { w: 'Room.foyer', s: 'Room.street' },
       // hint: '',
@@ -21,27 +21,27 @@ export default {
       // spawns: ['1d1000+1000', '1d3', 'Creature.ant', 'Creature.rat'],
     },
     foyer: {
-      name: 'House (foyer)',
+      name: 'House, Foyer',
       description: chance.paragraph(),
       exits: { w: 'Room.living', e: 'Room.house' },
     },
     living: {
-      name: 'House (living room)',
+      name: 'House, Living Room',
       description: chance.paragraph(),
       exits: { n: 'Room.dining', e: 'Room.foyer' },
     },
     dining: {
-      name: 'House (dining room)',
+      name: 'House, Dining Room',
       description: chance.paragraph(),
       exits: { w: 'Room.kitchen', n: 'Room.den', s: 'Room.living' },
     },
     kitchen: {
-      name: 'House (kitchen)',
+      name: 'House, Kitchen',
       description: chance.paragraph(),
       exits: { e: 'Room.dining' },
     },
     den: {
-      name: 'House (den)',
+      name: 'House, Den',
       description: chance.paragraph(),
       exits: { s: 'Room.dining' },
     },
@@ -61,11 +61,11 @@ export default {
       name: 'The Riddler',
       room: 'Room.car',
       commands: {
-        greet: ({ socket }) => socket.emit('data', 'hello\n'),
-        ask: ({ socket, event: query }) => {
+        greet: ({ socket }) => socket.emit('data', '^ghello'),
+        ask: ({ $this, socket, event: query }) => {
           switch (query) {
-            case 'riddle': return socket.emit('data', 'Yes!\n');
-            default: return '';
+            case 'riddle': return socket.emit('data', 'Yes!');
+            default: return socket.emit('data', `${$this.name} has nothing to tell you!`);
           }
         },
       },

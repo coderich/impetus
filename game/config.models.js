@@ -44,7 +44,7 @@ export default {
     },
 
     describe: ({ $this, units = [] }) => {
-      return `^c${$this.name}\n\t^:${$this.description}\n${units.length ? `^mAlso here: ${units.map(u => u.name).join(', ')}\n` : ''}^gExits: ${Object.keys($this.exits).join(', ')}: `;
+      return `^+^C${$this.name}\n    ^:${$this.description}\n${units.length ? `^mAlso here: ^M${units.map(u => u.name).join(', ')}\n` : ''}^gObvious exits: ${Object.keys($this.exits).join(', ')}`;
     },
   },
 
@@ -83,7 +83,7 @@ export default {
             const room = await $this.hydrate('room');
             const to = await room.hydrate(`exits.${target}`);
             if (to) return socket.emit('data', to.describe({ units: await to.hydrate('units') }));
-            return socket.emit('data', 'You stare off into a wall...\n');
+            return socket.emit('data', 'There is no exit in that direction!');
           }
         },
       );
@@ -97,7 +97,7 @@ export default {
           const to = await from.hydrate(`exits.${dir}`);
 
           if (!to) {
-            socket.emit('data', '^rno exit in that direction!\n');
+            socket.emit('data', 'There is no exit in that direction!');
             $stream.abort();
           }
 
@@ -106,11 +106,11 @@ export default {
         () => timeout(1000),
         async ({ player, from, to }) => {
           // Leave room
-          socket.broadcast.to(from.$id).emit('data', `${player.name} has left the room.\n`);
+          socket.broadcast.to(from.$id).emit('data', `${player.name} has left the room.`);
           await player.fromRoom({ $dao, socket, room: from.$id });
 
           // Enter room
-          socket.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.\n`);
+          socket.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.`);
           await player.toRoom({ $dao, socket, room: to });
 
           // Player scan
@@ -123,8 +123,8 @@ export default {
       return $this.flow.get().pipe(
         async () => {
           const player = await $this.get();
-          socket.broadcast.to(player.room).emit('data', `${player.name} says ${event}\n`);
-          socket.emit('data', `You say ${event}\n`);
+          socket.broadcast.to(player.room).emit('data', `\n^g${player.name} says "${event}"`);
+          socket.emit('data', `^gYou say "${event}"`);
         },
       );
     },
@@ -137,8 +137,6 @@ export default {
           const $target = units.find(unit => unit.name.toLowerCase().substring(0, target.length) === target);
 
           if ($target) {
-            socket.emit('data', `You greet ${$target.name}.\n`);
-
             if ($target.$type === 'NPC') {
               await $dao.config.get(`${$target.$id}.commands.greet`).then((fn = () => {}) => {
                 return fn({ $this: $target, $dao, socket });
@@ -172,7 +170,7 @@ export default {
     },
 
     unknown: ({ $this, socket }) => {
-      $this.flow.get().pipe(() => socket.emit('data', 'Command Unknown...\n'));
+      $this.flow.get().pipe(() => socket.emit('data', 'Your command had no effect.'));
     },
   },
 

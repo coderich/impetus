@@ -3,31 +3,36 @@ const { terminal } = require('terminal-kit');
 
 let input;
 terminal.grabInput();
+terminal.hideCursor(false);
 const socket = io('http://localhost:3003');
 
 const inputField = () => {
   input = terminal.inputField((err, value) => {
+    input.hide();
     socket.emit('data', value);
-    terminal.scrollUp(1).column(0);
     inputField();
   });
 };
 
+socket.on('connect', () => {
+  terminal.bell();
+  terminal.clear();
+});
+
 socket.on('query', (event, cb) => {
   input.abort();
-  input = terminal(event).inputField((err, value) => {
-    cb(value);
-    terminal.scrollUp(1).column(0);
-    inputField();
+  terminal.slowTyping(event, { delay: 10 }, () => {
+    terminal.inputField((err, value) => {
+      cb(value);
+      inputField();
+    });
   });
 });
 
 socket.on('data', (event) => {
-  terminal(`\n${event}`);
-  // terminal.eraseLine(); // Erase current writing
-  // terminal.insertLine(1).nextLine(1);
-  // terminal(event);
-  // terminal(buffer);
+  terminal.nextLine();
+  terminal(`${event}\n^:[HP=30]: `);
+  input.rebase();
 });
 
 inputField();
@@ -39,6 +44,8 @@ terminal.on('key', (name, matches, data) => {
       process.exit(0);
       break;
     }
-    default: break;
+    default: {
+      break;
+    }
   }
 });
