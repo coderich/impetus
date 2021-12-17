@@ -39,7 +39,8 @@ export default {
     },
 
     scan: ({ $this, units = [] }) => {
-      return `^c${$this.name}\n${units.length ? `^mAlso here: ${units.map(u => u.name).join(', ')}\n` : ''}^gExits: ${Object.keys($this.exits).join(', ')}: `;
+      return $this.describe({ units });
+      // return `^c${$this.name}\n${units.length ? `^mAlso here: ${units.map(u => u.name).join(', ')}\n` : ''}^gExits: ${Object.keys($this.exits).join(', ')}: `;
     },
 
     describe: ({ $this, units = [] }) => {
@@ -128,8 +129,50 @@ export default {
       );
     },
 
+    greet: ({ $this, $dao, socket, event: target }) => {
+      $this.flow.get().pipe(
+        async () => {
+          const room = await $this.hydrate('room');
+          const units = await room.hydrate('units').then(results => results.filter(el => el.$id !== $this.$id));
+          const $target = units.find(unit => unit.name.toLowerCase().substring(0, target.length) === target);
+
+          if ($target) {
+            socket.emit('data', `You greet ${$target.name}.\n`);
+
+            if ($target.$type === 'NPC') {
+              await $dao.config.get(`${$target.$id}.commands.greet`).then((fn = () => {}) => {
+                return fn({ $this: $target, $dao, socket });
+              });
+            }
+          }
+        },
+      );
+    },
+
+    ask: ({ $this, $dao, socket, event }) => {
+      const { target, query } = event;
+
+      $this.flow.get().pipe(
+        async () => {
+          const room = await $this.hydrate('room');
+          const units = await room.hydrate('units').then(results => results.filter(el => el.$type === 'NPC'));
+          const $target = units.find(unit => unit.name.toLowerCase().substring(0, target.length) === target);
+
+          if ($target) {
+            await $dao.config.get(`${$target.$id}.commands.ask`).then((fn = () => {}) => {
+              return fn({ $this: $target, $dao, socket, event: query.trim() });
+            });
+          }
+        },
+      );
+    },
+
     none: ({ $this, socket }) => {
       $this.flow.get().pipe(() => $this.scan({ socket }));
+    },
+
+    unknown: ({ $this, socket }) => {
+      $this.flow.get().pipe(() => socket.emit('data', 'Command Unknown...\n'));
     },
   },
 
@@ -185,6 +228,12 @@ export default {
         error: () => $this.scan(),
         complete: () => $this.scan(),
       });
+    },
+  },
+
+  NPC: {
+    init: ({ $this, $dao }) => {
+      $dao.db.ref($this.room).push('units', $this.$id);
     },
   },
 };
