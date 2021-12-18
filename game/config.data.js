@@ -1,29 +1,33 @@
+import axios from 'axios';
 import { chance } from './service';
 
 export default {
   Room: {
     car: {
-      name: 'Roadside',
-      description: 'In another ^ylife^ I would make you stay',
+      name: 'Roadside, Dirt Path Entrance',
+      description: 'You are standing at the entrace of a small dirt path along side a secluded road. From time to time you can hear the whisper of trees as the wind gently blows. A ^yBlack Audi A4^ sits motionless on the side of the road; victim of a flat tire.',
       exits: { n: 'Room.street' },
     },
     street: {
-      name: 'Side Street',
+      name: 'Dirt Path',
       description: chance.paragraph(),
       exits: { n: 'Room.house', s: 'Room.car' },
     },
     house: {
-      name: 'Side Street, Dead End',
+      name: 'Dirt Path, Dead End',
       description: chance.paragraph(),
-      exits: { w: 'Room.foyer', s: 'Room.street' },
+      exits: { s: 'Room.street', w: 'Room.foyer' },
       // hint: '',
       // keywords: {},
       // spawns: ['1d1000+1000', '1d3', 'Creature.ant', 'Creature.rat'],
     },
+    shed: {
+
+    },
     foyer: {
       name: 'House, Foyer',
       description: chance.paragraph(),
-      exits: { w: 'Room.living', e: 'Room.house' },
+      exits: { e: 'Room.house', w: 'Room.living' },
     },
     living: {
       name: 'House, Living Room',
@@ -33,7 +37,7 @@ export default {
     dining: {
       name: 'House, Dining Room',
       description: chance.paragraph(),
-      exits: { w: 'Room.kitchen', n: 'Room.den', s: 'Room.living' },
+      exits: { n: 'Room.den', s: 'Room.living', w: 'Room.kitchen' },
     },
     kitchen: {
       name: 'House, Kitchen',
@@ -59,13 +63,25 @@ export default {
   NPC: {
     riddler: {
       name: 'The Riddler',
-      room: 'Room.car',
+      room: 'Room.kitchen',
       commands: {
         greet: ({ socket }) => socket.emit('data', '^ghello'),
         ask: ({ $this, socket, event: query }) => {
           switch (query) {
-            case 'riddle': return socket.emit('data', 'Yes!');
-            default: return socket.emit('data', `${$this.name} has nothing to tell you!`);
+            case 'riddle': {
+              socket.emit('dialog', `${$this.name} pauses to think for a moment...`);
+              return axios.get('http://localhost:3000/riddle').then(({ data }) => {
+                if (data.error) return this.default.NPC.riddler.commands.ask({ $this, socket, event: query });
+                console.log(data);
+                return socket.emit('dialog', data.riddle, (answer) => {
+                  if (answer.toLowerCase() === data.answer.toLowerCase()) return socket.emit('data', 'You smart...');
+                  return socket.emit('data', 'You dumb...');
+                });
+              });
+            }
+            default: {
+              return socket.emit('data', `${$this.name} has nothing to tell you!`);
+            }
           }
         },
       },

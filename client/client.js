@@ -4,7 +4,16 @@ const { terminal } = require('terminal-kit');
 let input;
 terminal.grabInput();
 terminal.hideCursor(false);
+terminal.wrapColumn({ x: 5, width: 80 });
 const socket = io('http://localhost:3003');
+
+// const promiseChain = (promises) => {
+//   return promises.reduce((chain, promise) => {
+//     return chain.then(chainResults => promise([...chainResults]).then(promiseResult => [...chainResults, promiseResult]));
+//   }, Promise.resolve([]));
+// };
+
+// const timeout = ms => new Promise(res => setTimeout(res, ms));
 
 const inputField = () => {
   input = terminal.inputField((err, value) => {
@@ -15,24 +24,45 @@ const inputField = () => {
 };
 
 socket.on('connect', () => {
-  terminal.bell();
   terminal.clear();
 });
 
-socket.on('query', (event, cb) => {
+socket.on('dialog', (event, cb) => {
   input.abort();
-  terminal.slowTyping(event, { delay: 10 }, () => {
+  terminal.wrap('\n');
+  terminal.wrap(event);
+  if (cb) {
     terminal.inputField((err, value) => {
       cb(value);
       inputField();
     });
-  });
+  }
+
+  // promiseChain(event.split(' ').map(token => () => {
+  //   let [color, word] = token.split(':');
+  //   if (!word) { word = color; color = 'green'; }
+  //   return Promise.all([...word].map((char) => {
+  //     terminal.wrap[color](char);
+  //     return timeout(25);
+  //   })).then(() => {
+  //     terminal.wrap(' ');
+  //   });
+  // })).then(() => {
+  //   terminal.move(-1).inputField((err, value) => {
+  //     cb(value);
+  //     inputField();
+  //   });
+  // });
 });
 
 socket.on('data', (event) => {
-  terminal.nextLine();
-  terminal(`${event}\n^:[HP=30]: `);
+  terminal.wrap('\n');
+  terminal.wrap(`${event}\n^:[HP=30]: `);
   input.rebase();
+});
+
+socket.on('clear', () => {
+  terminal.clear();
 });
 
 inputField();

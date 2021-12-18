@@ -44,7 +44,7 @@ export default {
     },
 
     describe: ({ $this, units = [] }) => {
-      return `^+^C${$this.name}\n    ^:${$this.description}\n${units.length ? `^mAlso here: ^M${units.map(u => u.name).join(', ')}\n` : ''}^gObvious exits: ${Object.keys($this.exits).join(', ')}`;
+      return `^+^C${$this.name}\n    ^:${$this.description || ''}\n${units.length ? `^mAlso here: ^M${units.map(u => u.name).join(', ')}\n` : ''}^gObvious exits: ${Object.keys($this.exits).join(', ')}`;
     },
   },
 
@@ -123,7 +123,7 @@ export default {
       return $this.flow.get().pipe(
         async () => {
           const player = await $this.get();
-          socket.broadcast.to(player.room).emit('data', `\n^g${player.name} says "${event}"`);
+          socket.broadcast.to(player.room).emit('data', `^g${player.name} says "${event}"`);
           socket.emit('data', `^gYou say "${event}"`);
         },
       );
