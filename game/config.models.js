@@ -3,10 +3,12 @@ import { timeout, roll, randomElement } from './service';
 
 export default {
   Room: {
-    init: async ({ $this }) => {
+    install: async ({ $this }) => {
       const room = await $this.get();
       if (room.spawns) await room.set('respawnTime', new Date().getTime() + roll(room.spawns[0]));
+    },
 
+    init: ({ $this }) => {
       $this.flow.get('enter').subscribe({
         next: async () => {
           const now = new Date().getTime();
@@ -89,19 +91,14 @@ export default {
       );
     },
 
-    move: ({ $this, $dao, socket, event: dir }) => {
+    move: ({ $this, $dao, $emitter, socket, event: dir }) => {
       return $this.flow.get().pipe(
-        async ({ $stream }) => {
+        async () => {
           const player = await $this.get();
           const from = await $this.hydrate('room');
           const to = await from.hydrate(`exits.${dir}`);
-
-          if (!to) {
-            socket.emit('data', 'There is no exit in that direction!');
-            $stream.abort();
-          }
-
-          return { player, from, to };
+          if (!to) throw new Error('There is no exit in that direction!');
+          return $emitter.emit('player:move', { player, from, to });
         },
         () => timeout(1000),
         async ({ player, from, to }) => {
@@ -116,13 +113,18 @@ export default {
           // Player scan
           return $this.scan({ socket });
         }
-      );
+      ).subscribe({
+        error: e => socket.emit('data', e.message),
+      });
     },
 
     chat: ({ $this, socket, event }) => {
       return $this.flow.get().pipe(
-        async () => {
+        async ({ $emitter }) => {
           const player = await $this.get();
+          return $emitter.emit('player:chat', { player });
+        },
+        ({ player }) => {
           socket.broadcast.to(player.room).emit('data', `^g${player.name} says "${event}"`);
           socket.emit('data', `^gYou say "${event}"`);
         },
@@ -175,6 +177,8 @@ export default {
   },
 
   Creature: {
+    install: () => {},
+
     init: async ({ $this, $dao }) => {
       $this.scan();
       const room = await $dao.db.ref($this.room);
@@ -219,7 +223,7 @@ export default {
         },
 
         // Attack
-        async ({ $target }) => {
+        ({ $target }) => {
           return timeout(1500); // Mandatory recoil at this point
         },
       ).subscribe({
@@ -230,8 +234,22 @@ export default {
   },
 
   NPC: {
-    init: ({ $this, $dao }) => {
+    install: ({ $this, $dao }) => {
       $dao.db.ref($this.room).push('units', $this.$id);
+    },
+
+    init: () => {},
+  },
+
+  Door: {
+    install: () => {},
+
+    init: async ({ $this, $dao, $emitter }) => {
+      const { listeners = {} } = await $dao.config.get($this.$id);
+
+      Object.entries(listeners).forEach(([key, cb]) => {
+        $emitter.on(key, ($event, next) => cb({ $this, $dao, $emitter, $event }, next));
+      });
     },
   },
 };

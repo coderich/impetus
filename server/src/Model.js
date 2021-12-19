@@ -7,12 +7,12 @@ import { daoMethods } from './Util';
  * Converts the passed in value to a "model" with DAO + user-defined methods attached
  */
 export default class Model {
-  constructor($dao, instance, key, value, model = {}) {
+  constructor($dao, $emitter, instance, key, value, model = {}) {
     const root = key.split('.').slice(0, 2);
-    return Model.wrapInstance($dao, value, instance, model, root);
+    return Model.wrapInstance($dao, $emitter, value, instance, model, root);
   }
 
-  static wrapInstance($dao, wrapper, instance, model, root) {
+  static wrapInstance($dao, $emitter, wrapper, instance, model, root) {
     const config = { writable: true, enumerable: false, configurable: true };
 
     Object.defineProperties(wrapper, {
@@ -47,7 +47,7 @@ export default class Model {
     Object.defineProperties(wrapper, Object.entries(model).reduce((prev, [k, v]) => {
       return Object.assign(prev, {
         [k]: {
-          value: event => v(Object.assign({}, event, { $dao, $this: wrapper })),
+          value: event => v(Object.assign({}, event, { $dao, $emitter, $this: wrapper })),
           ...config,
         },
       });

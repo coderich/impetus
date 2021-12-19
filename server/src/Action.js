@@ -19,10 +19,8 @@ export default class Action {
     this.params = { $stream: stream, $action: this };
 
     this.observable = this.subject.pipe(
-      tap((hook) => {
-        if (hook === 'abort') {
-          this.subject.error();
-        }
+      tap((action) => {
+        if (action instanceof Error) this.subject.error();
       }),
       concatMap(async (worker) => {
         if (this.paused) await this.paused;
@@ -56,7 +54,7 @@ export default class Action {
     if (this.paused) { this.play(); this.paused = false; }
   }
 
-  abort() {
-    this.subject.next('abort');
+  abort(reason) {
+    this.subject.next(new Error(reason));
   }
 }

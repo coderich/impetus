@@ -17,10 +17,8 @@ export default class Stream {
     this.subject = new Subject();
 
     this.observable = this.subject.pipe(
-      tap((hook) => {
-        if (hook === 'abort') {
-          throw new Error();
-        }
+      tap((action) => {
+        if (action instanceof Error) throw action;
       }),
       concatMap(async (action) => {
         if (this.paused) await this.paused;
@@ -74,8 +72,8 @@ export default class Stream {
     this.actions.forEach(action => action.resume());
   }
 
-  abort() {
-    this.subject.next('abort');
-    this.actions.splice(0, this.actions.length).forEach(action => action.abort());
+  abort(reason) {
+    this.subject.next(new Error(reason));
+    this.actions.splice(0, this.actions.length).forEach(action => action.abort(reason));
   }
 }

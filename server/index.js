@@ -2,28 +2,25 @@ import Dao from './src/Dao';
 import Data from './src/Data';
 import Redis from './src/Redis';
 import Server from './src/Server';
-import EventEmitter from './src/EventEmitter';
+import ChainEmitter, { emitter } from './src/ChainEmitter';
 
 export default async (gameConfig) => {
   // Normalize Game Config
   Object.entries(gameConfig).reduce((prev, [key, value]) => Object.assign(prev, { [key]: value || {} }), gameConfig);
 
   // Create instances
+  const $emitter = new ChainEmitter();
   const redis = new Redis(gameConfig.redis);
-  const $dao = new Dao(redis, new Data({}), new Data(gameConfig.data), gameConfig.models);
+  const $dao = new Dao($emitter, redis, new Data({}), new Data(gameConfig.data), gameConfig.models);
   const $server = new Server(gameConfig.server);
 
   // The entire engine is event driven
-  EventEmitter.on('$system', ({ type, socket, event }) => {
+  emitter.on('$system', ({ type, socket, event }) => {
     const listener = gameConfig.listeners[type];
-
-    if (listener) {
-      const $emit = (t, e) => EventEmitter.emit('$system', { type: t, socket, event: e });
-      listener({ $dao, $emit, socket, event });
-    }
+    if (listener) listener({ $dao, $emitter, socket, event });
   });
 
-  EventEmitter.on('$system', ({ type, socket }) => {
+  emitter.on('$system', ({ type, socket }) => {
     if (type === '$socket:connection') {
       Object.entries(gameConfig.translators).forEach(([on, directive]) => {
         socket.on(on, (event) => {
@@ -33,7 +30,7 @@ export default async (gameConfig) => {
             if (value != null) {
               const [root, method] = path.split('.');
               const $this = socket.data[root];
-              $this[method]({ $this, $dao, socket, event: value });
+              $this[method]({ $this, $dao, $emitter, socket, event: value });
               return true;
             }
 
@@ -47,5 +44,5 @@ export default async (gameConfig) => {
   // Start server
   await redis.connect();
   $server.listen(gameConfig.server.port || 3003);
-  EventEmitter.emit('$system', { type: '$ready' });
+  emitter.emit('$system', { type: '$ready' });
 };

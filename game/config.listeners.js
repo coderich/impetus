@@ -2,12 +2,14 @@ export default {
   $ready: async ({ $dao }) => {
     await $dao.db.set('autoIncrement', 0);
     const config = await $dao.config.get('');
-    const data = { Room: config.Room, NPC: config.NPC };
+    const data = { Room: config.Room, NPC: config.NPC, Door: config.Door };
 
     return Promise.all(Object.entries(data).map(([root, value]) => {
-      return Promise.all(Object.entries(value).map(([id, definition]) => {
+      return Promise.all(Object.entries(value).map(async ([id, definition]) => {
         const key = `${root}.${id}`;
-        return $dao.db.set(key, definition);
+        const model = await $dao.db.set(key, definition);
+        await model.install();
+        return model;
       }));
     })).then((models) => {
       return Promise.all(models.flat().map(model => model.init()));

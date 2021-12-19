@@ -11,23 +11,23 @@ export default {
     street: {
       name: 'Dirt Path',
       description: chance.paragraph(),
-      exits: { n: 'Room.house', s: 'Room.car' },
+      exits: { n: 'Room.yard', s: 'Room.car' },
     },
-    house: {
+    yard: {
       name: 'Dirt Path, Dead End',
       description: chance.paragraph(),
-      exits: { s: 'Room.street', w: 'Room.foyer' },
-      // hint: '',
-      // keywords: {},
-      // spawns: ['1d1000+1000', '1d3', 'Creature.ant', 'Creature.rat'],
+      exits: { n: 'Room.shed', s: 'Room.street', w: 'Room.foyer' },
     },
     shed: {
-
+      name: 'Shed',
+      description: chance.paragraph(),
+      exits: { s: 'Room.yard' },
+      spawns: ['1d1000+1000', '1d3', 'Creature.ant', 'Creature.rat'],
     },
     foyer: {
       name: 'House, Foyer',
       description: chance.paragraph(),
-      exits: { e: 'Room.house', w: 'Room.living' },
+      exits: { e: 'Room.yard', w: 'Room.living' },
     },
     living: {
       name: 'House, Living Room',
@@ -63,7 +63,7 @@ export default {
   NPC: {
     riddler: {
       name: 'The Riddler',
-      room: 'Room.kitchen',
+      room: 'Room.car',
       commands: {
         greet: ({ socket }) => socket.emit('data', '^ghello'),
         ask: ({ $this, socket, event: query }) => {
@@ -72,7 +72,6 @@ export default {
               socket.emit('dialog', `${$this.name} pauses to think for a moment...`);
               return axios.get('http://localhost:3000/riddle').then(({ data }) => {
                 if (data.error) return this.default.NPC.riddler.commands.ask({ $this, socket, event: query });
-                console.log(data);
                 return socket.emit('dialog', data.riddle, (answer) => {
                   if (answer.toLowerCase() === data.answer.toLowerCase()) return socket.emit('data', 'You smart...');
                   return socket.emit('data', 'You dumb...');
@@ -83,6 +82,32 @@ export default {
               return socket.emit('data', `${$this.name} has nothing to tell you!`);
             }
           }
+        },
+      },
+    },
+  },
+
+  Door: {
+    shed: {
+      status: 'open|closed|locked|smashed',
+      listeners: {
+        'player:move': async ({ $this, $event }, next) => {
+          const { to, from } = $event;
+
+          if (to.$id === 'Room.shed' && from.$id === 'Room.yard') {
+            const { status } = await $this.get();
+
+            switch (status) {
+              case 'closed': case 'locked': {
+                break;
+              }
+              default: {
+                break;
+              }
+            }
+          }
+
+          next();
         },
       },
     },

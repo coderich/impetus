@@ -2,15 +2,15 @@ import { map, daoMethods } from './Util';
 import Model from './Model';
 
 export default class Dao {
-  constructor(db, ram, config, models) {
+  constructor($emitter, db, ram, config, models) {
     const $dao = { db: {}, ram: {}, config: {} };
-    Dao.wrapInstance($dao, $dao.db, db, models);
-    Dao.wrapInstance($dao, $dao.ram, ram, models);
-    Dao.wrapInstance($dao, $dao.config, config, models);
+    Dao.wrapInstance($dao, $emitter, $dao.db, db, models);
+    Dao.wrapInstance($dao, $emitter, $dao.ram, ram, models);
+    Dao.wrapInstance($dao, $emitter, $dao.config, config, models);
     return $dao;
   }
 
-  static wrapInstance($dao, wrapper, instance, models) {
+  static wrapInstance($dao, $emitter, wrapper, instance, models) {
     const config = { writable: true, enumerable: false, configurable: true };
 
     Object.defineProperties(wrapper, daoMethods.filter(method => method !== 'hydrate').reduce((prev, method) => {
@@ -21,7 +21,7 @@ export default class Dao {
             if (typeof value !== 'object') return value;
             if (Array.isArray(value)) return value;
             const [root] = key.split('.');
-            return new Model($dao, wrapper, key, value, models[root]);
+            return new Model($dao, $emitter, wrapper, key, value, models[root]);
           }),
           ...config,
         },
@@ -32,7 +32,7 @@ export default class Dao {
       ref: {
         value: (key) => {
           const [root] = key.split('.');
-          return new Model($dao, wrapper, key, {}, models[root]);
+          return new Model($dao, $emitter, wrapper, key, {}, models[root]);
         },
         ...config,
       },
