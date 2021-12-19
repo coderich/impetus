@@ -93,26 +93,34 @@ export default {
 
     move: ({ $this, $dao, $emitter, socket, event: dir }) => {
       return $this.flow.get().pipe(
+        // Intent
         async () => {
-          const player = await $this.get();
+          const subject = await $this.get();
           const from = await $this.hydrate('room');
           const to = await from.hydrate(`exits.${dir}`);
-          if (!to) throw new Error('There is no exit in that direction!');
-          return $emitter.emit('player:move', { player, from, to });
+          return $emitter.emit('pre:move', { subject, from, to });
         },
+        // Hinderences
+        ({ subject, from, to }) => {
+          if (!to) throw new Error('There is no exit in that direction!');
+          $emitter.emit('on:move', { subject, from, to });
+        },
+        // Time to perform
         () => timeout(1000),
-        async ({ player, from, to }) => {
+        // Move the player
+        async ({ subject, from, to }) => {
           // Leave room
-          socket.broadcast.to(from.$id).emit('data', `${player.name} has left the room.`);
-          await player.fromRoom({ $dao, socket, room: from.$id });
+          socket.broadcast.to(from.$id).emit('data', `${subject.name} has left the room.`);
+          await subject.fromRoom({ $dao, socket, room: from.$id });
 
           // Enter room
-          socket.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.`);
-          await player.toRoom({ $dao, socket, room: to });
+          socket.broadcast.to(to.$id).emit('data', `${subject.name} has entered the room.`);
+          await subject.toRoom({ $dao, socket, room: to });
 
           // Player scan
           return $this.scan({ socket });
-        }
+        },
+        args => $emitter.emit('post:move', args),
       ).subscribe({
         error: e => socket.emit('data', e.message),
       });

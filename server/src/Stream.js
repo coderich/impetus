@@ -4,6 +4,8 @@ import { Subject, throwError } from 'rxjs';
 import { tap, concatMap, retry, publish } from 'rxjs/operators';
 import Action from './Action';
 
+const subStreamMap = new Map();
+
 /**
  * Stream
  *

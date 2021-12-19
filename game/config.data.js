@@ -16,12 +16,12 @@ export default {
     yard: {
       name: 'Dirt Path, Dead End',
       description: chance.paragraph(),
-      exits: { n: 'Room.shed', s: 'Room.street', w: 'Room.foyer' },
+      exits: { n: { 'Room.shed': ['Door.shed'] }, s: 'Room.street', w: 'Room.foyer' },
     },
     shed: {
       name: 'Shed',
       description: chance.paragraph(),
-      exits: { s: 'Room.yard' },
+      exits: { s: { 'Room.yard': ['Door.shed'] } },
       spawns: ['1d1000+1000', '1d3', 'Creature.ant', 'Creature.rat'],
     },
     foyer: {
