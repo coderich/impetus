@@ -1,4 +1,4 @@
-import Flow from './Flow';
+import Stream from './Stream';
 import { daoMethods } from './Util';
 
 /**
@@ -62,7 +62,7 @@ export default class Model {
         ...config,
       },
       flow: {
-        value: new Flow(wrapper.$id),
+        value: new Stream(wrapper.$id),
         ...config,
       },
     });

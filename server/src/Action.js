@@ -20,7 +20,9 @@ export default class Action {
 
     this.observable = this.subject.pipe(
       tap((action) => {
-        if (action instanceof Error) this.subject.error();
+        if (action instanceof Error) {
+          this.subject.error(action);
+        }
       }),
       concatMap(async (worker) => {
         if (this.paused) await this.paused;
@@ -42,19 +44,22 @@ export default class Action {
     });
   }
 
-  subscribe(...args) {
-    return this.observable.subscribe(...args);
+  subscribe(args) {
+    return this.observable.subscribe(args);
   }
 
   pause() {
     if (!this.paused) this.paused = new Promise((resolve) => { this.play = resolve; }); // eslint-disable-line no-new
+    return this;
   }
 
   resume() {
     if (this.paused) { this.play(); this.paused = false; }
+    return this;
   }
 
-  abort(reason) {
+  abort(reason = 'abort') {
     this.subject.next(new Error(reason));
+    return this;
   }
 }

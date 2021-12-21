@@ -4,8 +4,8 @@ export default {
   data: {
     'Player.none': v => v.match(/^$/),
     'Player.look': (v) => {
-      const matches = v.match(/^l(?:\s(o|oo|ook)?)\s*(.*)$/i);
-      return matches ? matches[2] : null;
+      const matches = v.match(/^l(?:ook|oo|o)?\s*(.*)$/i);
+      return matches ? matches[1] : null;
     },
     'Player.move': v => isDirection(v) && v,
     'Player.chat': (v) => {
@@ -14,6 +14,10 @@ export default {
     },
     'Player.greet': (v) => {
       const matches = v.match(/^greet\s*(.*)$/i);
+      return matches ? matches[1] : null;
+    },
+    'Player.open': (v) => {
+      const matches = v.match(/^op(?:en|e)?\s*(.*)$/i);
       return matches ? matches[1] : null;
     },
     'Player.ask': (v) => {

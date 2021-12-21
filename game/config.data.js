@@ -16,12 +16,14 @@ export default {
     yard: {
       name: 'Dirt Path, Dead End',
       description: chance.paragraph(),
-      exits: { n: { 'Room.shed': ['Door.shed'] }, s: 'Room.street', w: 'Room.foyer' },
+      obstacles: { n: ['Door.shed'] },
+      exits: { n: 'Room.shed', s: 'Room.street', w: 'Room.foyer' },
     },
     shed: {
       name: 'Shed',
       description: chance.paragraph(),
-      exits: { s: { 'Room.yard': ['Door.shed'] } },
+      obstacles: { s: ['Door.shed'] },
+      exits: { s: 'Room.yard' },
       spawns: ['1d1000+1000', '1d3', 'Creature.ant', 'Creature.rat'],
     },
     foyer: {
@@ -89,27 +91,27 @@ export default {
 
   Door: {
     shed: {
-      status: 'open|closed|locked|smashed',
-      listeners: {
-        'player:move': async ({ $this, $event }, next) => {
-          const { to, from } = $event;
+      status: 'closed',
+      // listeners: {
+      //   'player:move': async ({ $this, $event }, next) => {
+      //     const { to, from } = $event;
 
-          if (to.$id === 'Room.shed' && from.$id === 'Room.yard') {
-            const { status } = await $this.get();
+      //     if (to.$id === 'Room.shed' && from.$id === 'Room.yard') {
+      //       const { status } = await $this.get();
 
-            switch (status) {
-              case 'closed': case 'locked': {
-                break;
-              }
-              default: {
-                break;
-              }
-            }
-          }
+      //       switch (status) {
+      //         case 'closed': case 'locked': {
+      //           break;
+      //         }
+      //         default: {
+      //           break;
+      //         }
+      //       }
+      //     }
 
-          next();
-        },
-      },
+      //     next();
+      //   },
+      // },
     },
   },
 };

@@ -2,14 +2,14 @@ import Dao from './src/Dao';
 import Data from './src/Data';
 import Redis from './src/Redis';
 import Server from './src/Server';
-import ChainEmitter, { emitter } from './src/ChainEmitter';
+import { emitter } from './src/ChainEmitter';
 
 export default async (gameConfig) => {
   // Normalize Game Config
   Object.entries(gameConfig).reduce((prev, [key, value]) => Object.assign(prev, { [key]: value || {} }), gameConfig);
 
   // Create instances
-  const $emitter = new ChainEmitter();
+  const $emitter = emitter;
   const redis = new Redis(gameConfig.redis);
   const $dao = new Dao($emitter, redis, new Data({}), new Data(gameConfig.data), gameConfig.models);
   const $server = new Server(gameConfig.server);
