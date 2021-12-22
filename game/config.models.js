@@ -23,6 +23,16 @@ export default {
       });
     },
 
+    enter: ({ $dao, socket, player, from, to }) => {
+      socket.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.`);
+      return player.toRoom({ $dao, socket, room: to });
+    },
+
+    exit: ({ $dao, socket, player, from, to }) => {
+      socket.broadcast.to(from.$id).emit('data', `^y${player.name}^ has left the room.`);
+      return player.fromRoom({ $dao, socket, room: from.$id });
+    },
+
     spawn: ({ $this, $dao }) => {
       const [delay, num, ...models] = $this.spawns;
 
@@ -40,12 +50,16 @@ export default {
       }));
     },
 
-    scan: ({ $this, units = [] }) => {
-      return `^+^C${$this.name}\n^:${units.length ? `^mAlso here:^ ${units.map(u => u.displayName()).join(', ')}\n` : ''}^gObvious exits: ${Object.keys($this.exits).map(k => directions[k]).join(', ')}`;
+    scan: async ({ $this, filter = () => true }) => {
+      const room = await $this.get();
+      const units = await room.hydrate('units', []).then(results => results.filter(filter));
+      return `^+^C${room.name}\n^:${units.length ? `^mAlso here:^ ${units.map(u => u.displayName()).join(', ')}\n` : ''}^gObvious exits: ${Object.keys(room.exits).map(k => directions[k]).join(', ')}`;
     },
 
-    describe: ({ $this, units = [] }) => {
-      return `^+^C${$this.name}\n^:${$this.description ? `    ${$this.description}\n^:` : ''}${units.length ? `^mAlso here:^ ${units.map(u => u.displayName()).join(', ')}\n` : ''}^gObvious exits: ${Object.keys($this.exits).map(k => directions[k]).join(', ')}`;
+    look: async ({ $this, filter = () => true }) => {
+      const room = await $this.get();
+      const units = await room.hydrate('units', []).then(results => results.filter(filter));
+      return `^+^C${room.name}\n^:${room.description ? `    ${room.description}\n^:` : ''}${units.length ? `^mAlso here:^ ${units.map(u => u.displayName()).join(', ')}\n` : ''}^gObvious exits: ${Object.keys(room.exits).map(k => directions[k]).join(', ')}`;
     },
   },
 
@@ -60,15 +74,14 @@ export default {
     fromRoom: async ({ $this, $dao, socket, room }) => {
       socket.leave(room);
       await $dao.db.pull(`${room}.units`, $this.$id);
-      await $this.del('room');
     },
 
     displayName: ({ $this }) => `^M${$this.name}`,
 
     scan: async ({ $this, socket }) => {
-      const room = await $this.hydrate('room');
-      const units = await room.hydrate('units').then(arr => arr.filter(el => el.$id !== $this.$id));
-      socket.emit('data', room.scan({ units }));
+      const player = await $this.get();
+      const room = await player.hydrate('room');
+      socket.emit('data', await room.scan({ filter: el => el.$id !== $this.$id }));
     },
 
     look: ({ $this, socket, event: target }) => {
@@ -77,17 +90,16 @@ export default {
         async () => {
           // No target means look in room
           if (target === '') {
-            const room = await $this.hydrate('room');
-            const units = await room.hydrate('units').then(arr => arr.filter(el => el.$id !== $this.$id));
-            return socket.emit('data', room.describe({ units }));
+            const room = await $this.ref('room');
+            return socket.emit('data', await room.look({ filter: el => el.$id !== $this.$id }));
           }
 
           // Direction check
           if (isDirection(target)) {
-            const room = await $this.hydrate('room');
+            const room = await $this.ref('room');
             const to = await room.hydrate(`exits.${target}`);
             if (!to) throw new Error('There is no exit in that direction!');
-            return socket.emit('data', to.describe({ units: await to.hydrate('units') }));
+            return socket.emit('data', await to.look({ dir: target }));
           }
         },
       ).subscribe({
@@ -105,9 +117,29 @@ export default {
           const room = await player.hydrate('room');
 
           if (isDirection(target)) {
-            const obstacles = await room.hydrate(`obstacles.${target}`, []);
-            if (obstacles.length === 0) throw new Error('There is nothing to open in that direction.');
-            await obstacles.map(o => (o.open ? o.open() : Promise.resolve()));
+            const exit = await room.hydrate(`exits.${target}`);
+            if (!exit.open) throw new Error('There is nothing to open in that direction.');
+            await exit.open({ socket });
+          }
+        },
+      ).subscribe({
+        error: e => socket.emit('data', e.message),
+      });
+    },
+
+    close: ({ $this, socket, event: target }) => {
+      return $this.flow.get().fork(
+        'close',
+        async () => {
+          if (target === '') throw new Error('^rSyntax: CLOSE {Direction|Item}');
+
+          const player = await $this.get();
+          const room = await player.hydrate('room');
+
+          if (isDirection(target)) {
+            const exit = await room.hydrate(`exits.${target}`);
+            if (!exit.close) throw new Error('There is nothing to close in that direction.');
+            await exit.close({ socket });
           }
         },
       ).subscribe({
@@ -118,42 +150,25 @@ export default {
     move: ({ $this, $dao, $emitter, socket, event: dir }) => {
       return $this.flow.get().fork(
         'move',
-        // Intent
         async () => {
-          const player = await $this.get();
           const from = await $this.hydrate('room');
           const to = await from.hydrate(`exits.${dir}`);
-          const obstacles = await from.hydrate(`obstacles.${dir}`);
-          return { player, from, to, obstacles };
-        },
-        // Hinderences
-        async ({ player, from, to, obstacles }) => {
           if (!to) throw new Error('There is no exit in that direction!');
-          if (obstacles) await obstacles.map(o => (o.move ? o.move() : Promise.resolve()));
+          const player = await $this.get();
+          return { player, from, to };
         },
-        // Time to perform
-        () => timeout(1000),
-        // Move the player
+        () => timeout(500),
         async ({ player, from, to }) => {
-          // Leave room
-          socket.broadcast.to(from.$id).emit('data', `^y${player.name}^ has left the room.`);
-          await player.fromRoom({ $dao, socket, room: from.$id });
+          // Enter
+          await to.enter({ $dao, socket, player, from, to, dir });
 
-          // Enter room
-          socket.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.`);
-          await player.toRoom({ $dao, socket, room: to });
-
-          // Player scan
-          return $this.scan({ socket });
+          // Exit
+          await from.exit({ $dao, socket, player, from, to, dir });
         },
+        () => timeout(500),
       ).subscribe({
         error: e => socket.emit('data', e.message),
-        // complete: () => {
-        //   $emitter.on(`pre:${$this.$id}`, function hijack(action) {
-        //     action.abort('You been hijacked');
-        //     $emitter.off(`pre:${$this.$id}`, hijack);
-        //   });
-        // },
+        complete: () => $this.scan({ socket }),
       });
     },
 
@@ -295,25 +310,49 @@ export default {
       // });
     },
 
-    move: ({ $this }) => {
+    look: ({ $this, dir }) => {
+      return $this.hydrate(`connects.${dir}`).then(conn => conn.look());
+    },
+
+    enter: async (event) => {
+      const { $this, dir } = event;
+
       switch ($this.status) {
         case 'closed': case 'locked': {
           throw new Error(`The door is ${$this.status}.`);
         }
         default: {
-          break;
+          event.to = await $this.hydrate(`connects.${dir}`);
+          return event.to.enter(event);
         }
       }
     },
 
-    open: async ({ $this }) => {
+    open: async ({ $this, socket }) => {
       switch ($this.status) {
         case 'open': throw new Error('The door is already open.');
-        case 'closed': return $this.set('status', 'open');
         case 'locked': throw new Error('The door is locked.');
-        default: {
+        case 'closed': {
+          await $this.set('status', 'open').then(() => {
+            socket.emit('data', 'You open the door.');
+          });
           break;
         }
+        default: break;
+      }
+    },
+
+    close: async ({ $this, socket }) => {
+      switch ($this.status) {
+        case 'closed': throw new Error('The door is already closed.');
+        case 'locked': throw new Error('The door is already closed and locked.');
+        case 'open': {
+          await $this.set('status', 'closed').then(() => {
+            socket.emit('data', 'You close the door.');
+          });
+          break;
+        }
+        default: break;
       }
     },
   },

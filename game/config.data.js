@@ -16,14 +16,12 @@ export default {
     yard: {
       name: 'Dirt Path, Dead End',
       description: chance.paragraph(),
-      obstacles: { n: ['Door.shed'] },
-      exits: { n: 'Room.shed', s: 'Room.street', w: 'Room.foyer' },
+      exits: { n: 'Door.shed', s: 'Room.street', w: 'Room.foyer' },
     },
     shed: {
       name: 'Shed',
       description: chance.paragraph(),
-      obstacles: { s: ['Door.shed'] },
-      exits: { s: 'Room.yard' },
+      exits: { s: 'Door.shed' },
       spawns: ['1d1000+1000', '1d3', 'Creature.ant', 'Creature.rat'],
     },
     foyer: {
@@ -92,6 +90,7 @@ export default {
   Door: {
     shed: {
       status: 'closed',
+      connects: { n: 'Room.shed', s: 'Room.yard' },
       // listeners: {
       //   'player:move': async ({ $this, $event }, next) => {
       //     const { to, from } = $event;
