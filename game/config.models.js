@@ -23,6 +23,8 @@ export default {
       });
     },
 
+    displayName: () => null,
+
     enter: ({ $dao, socket, player, from, to }) => {
       socket.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.`);
       return player.toRoom({ $dao, socket, room: to });
@@ -50,16 +52,14 @@ export default {
       }));
     },
 
-    scan: async ({ $this, filter = () => true }) => {
+    look: async ({ $this, brief = false, filter = () => true }) => {
       const room = await $this.get();
       const units = await room.hydrate('units', []).then(results => results.filter(filter));
-      return `^+^C${room.name}\n^:${units.length ? `^mAlso here:^ ${units.map(u => u.displayName()).join(', ')}\n` : ''}^gObvious exits: ${Object.keys(room.exits).map(k => directions[k]).join(', ')}`;
-    },
-
-    look: async ({ $this, filter = () => true }) => {
-      const room = await $this.get();
-      const units = await room.hydrate('units', []).then(results => results.filter(filter));
-      return `^+^C${room.name}\n^:${room.description ? `    ${room.description}\n^:` : ''}${units.length ? `^mAlso here:^ ${units.map(u => u.displayName()).join(', ')}\n` : ''}^gObvious exits: ${Object.keys(room.exits).map(k => directions[k]).join(', ')}`;
+      const exits = await room.hydrate('exits', {});
+      const description = !brief && room.description ? `    ${room.description}\n^:` : '';
+      const alsoHere = units.length ? `^mAlso here:^ ${units.map(u => u.displayName()).join(', ')}\n` : '';
+      const obviousExits = `^gObvious exits: ${Object.entries(exits).map(([k, v]) => [v.displayName(), directions[k]].filter(Boolean).join(' ')).join(', ')}`;
+      return `^+^C${room.name}\n^:${description}${alsoHere}${obviousExits}`;
     },
   },
 
@@ -81,7 +81,7 @@ export default {
     scan: async ({ $this, socket }) => {
       const player = await $this.get();
       const room = await player.hydrate('room');
-      socket.emit('data', await room.scan({ filter: el => el.$id !== $this.$id }));
+      socket.emit('data', await room.look({ brief: true, filter: el => el.$id !== $this.$id }));
     },
 
     look: ({ $this, socket, event: target }) => {
@@ -118,7 +118,7 @@ export default {
 
           if (isDirection(target)) {
             const exit = await room.hydrate(`exits.${target}`);
-            if (!exit.open) throw new Error('There is nothing to open in that direction.');
+            if (!exit || !exit.open) throw new Error('There is nothing to open in that direction.');
             await exit.open({ socket });
           }
         },
@@ -309,6 +309,8 @@ export default {
       //   $emitter.on(key, ($event, next) => cb({ $this, $dao, $emitter, $event }, next));
       // });
     },
+
+    displayName: ({ $this }) => `${$this.status} door`,
 
     look: ({ $this, dir }) => {
       return $this.hydrate(`connects.${dir}`).then(conn => conn.look());

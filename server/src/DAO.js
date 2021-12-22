@@ -1,4 +1,4 @@
-import { map, daoMethods } from './Util';
+import { map, daoMethods, resolveDataObject } from './Util';
 import Model from './Model';
 
 export default class Dao {
@@ -37,7 +37,12 @@ export default class Dao {
         ...config,
       },
       hydrate: {
-        value: (key, defaultValue) => instance.get(key).then(value => map(value, li => wrapper.get(li), true)).then((value = defaultValue) => value),
+        value: (key, defaultValue) => instance.get(key).then((value) => {
+          if (typeof value === 'object' && !Array.isArray(value)) {
+            return resolveDataObject(Object.entries(value).reduce((prev, [k, v]) => Object.assign(prev, { [k]: wrapper.get(v) }), {}));
+          }
+          return map(value, li => wrapper.get(li), true);
+        }).then((value = defaultValue) => value),
         ...config,
       },
     });

@@ -89,28 +89,16 @@ export default {
 
   Door: {
     shed: {
-      status: 'closed',
+      toBash: 100,
+      toPick: 100,
+      status: 'open',
       connects: { n: 'Room.shed', s: 'Room.yard' },
-      // listeners: {
-      //   'player:move': async ({ $this, $event }, next) => {
-      //     const { to, from } = $event;
+    },
+  },
 
-      //     if (to.$id === 'Room.shed' && from.$id === 'Room.yard') {
-      //       const { status } = await $this.get();
-
-      //       switch (status) {
-      //         case 'closed': case 'locked': {
-      //           break;
-      //         }
-      //         default: {
-      //           break;
-      //         }
-      //       }
-      //     }
-
-      //     next();
-      //   },
-      // },
+  Key: {
+    shed: {
+      targets: ['Door.shed'],
     },
   },
 };

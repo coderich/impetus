@@ -1,5 +1,5 @@
 import { createClient } from 'redis';
-import { map } from './Util';
+import { map, resolveDataObject } from './Util';
 
 export default class Redis {
   constructor(config) {
@@ -53,6 +53,11 @@ export default class Redis {
   }
 
   hydrate(key, defaultValue) {
-    return this.get(key).then(value => map(value, li => this.get(li), true)).then((value = defaultValue) => value);
+    return this.get(key).then((value) => {
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        return resolveDataObject(Object.entries(value).reduce((prev, [k, v]) => Object.assign(prev, { [k]: this.get(v) }), {}));
+      }
+      return map(value, li => this.get(li), true);
+    }).then((value = defaultValue) => value);
   }
 }

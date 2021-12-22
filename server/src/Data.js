@@ -33,6 +33,12 @@ export default class Data {
   }
 
   hydrate(key, defaultValue) {
-    return map(this.get(key), li => this.get(li)) || defaultValue;
+    const value = this.get(key);
+
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      return Object.entries(value).reduce((prev, [k, v]) => Object.assign(prev, { [k]: this.get(v) }), {});
+    }
+
+    return map(value, li => this.get(li)) || defaultValue;
   }
 }
