@@ -4,8 +4,9 @@ export default {
   data: {
     'Player.none': v => v.match(/^$/),
     'Player.move': v => isDirection(v) && v,
+    'Player.inventory': v => v.match(/^i(?:nventory|nventor|nvento|nvent|nven|nve|nv)?$/i) && v,
     'Player.look': (v) => {
-      const matches = v.match(/^l(?:ook|oo|o)?\s*(.*)$/i);
+      const matches = v.match(/^\bl(?:ook|oo|o)?\b\s*(.*)$/i);
       return matches ? matches[1] : null;
     },
     'Player.chat': (v) => {
@@ -13,15 +14,23 @@ export default {
       return matches ? matches[1] : null;
     },
     'Player.greet': (v) => {
-      const matches = v.match(/^gr(?:eet|ee|e)?\s*(.*)$/i);
+      const matches = v.match(/^\bgr(?:eet|ee|e)?\b\s*(.*)$/i);
+      return matches ? matches[1] : null;
+    },
+    'Player.pickup': (v) => {
+      const matches = v.match(/^\bg(?:et|e)?\b\s*(.*)$/i);
+      return matches ? matches[1] : null;
+    },
+    'Player.drop': (v) => {
+      const matches = v.match(/^\bdro(?:p)?\b\s*(.*)$/i);
       return matches ? matches[1] : null;
     },
     'Player.open': (v) => {
-      const matches = v.match(/^op(?:en|e)?\s*(.*)$/i);
+      const matches = v.match(/^\bop(?:en|e)?\b\s*(.*)$/i);
       return matches ? matches[1] : null;
     },
     'Player.close': (v) => {
-      const matches = v.match(/^cl(?:ose|os|o)?\s*(.*)$/i);
+      const matches = v.match(/^\bcl(?:ose|os|o)?\b\s*(.*)$/i);
       return matches ? matches[1] : null;
     },
     'Player.unknown': v => v,

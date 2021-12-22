@@ -6,6 +6,7 @@ export default {
     car: {
       name: 'Roadside, Dirt Path Entrance',
       description: 'You are standing at the entrace of a small dirt path along side a secluded road. From time to time you can hear the whisper of trees as the wind gently blows. A ^yBlack Audi A4^ sits motionless on the side of the road; victim of a flat tire.',
+      items: ['Chest.den'],
       exits: { n: 'Room.street' },
     },
     street: {
@@ -47,6 +48,7 @@ export default {
     den: {
       name: 'House, Den',
       description: chance.paragraph(),
+      items: ['Chest.den'],
       exits: { s: 'Room.dining' },
     },
   },
@@ -64,29 +66,53 @@ export default {
     riddler: {
       name: 'The Riddler',
       room: 'Room.car',
-      greet: ({ $this, socket, data = '^gHello' }) => {
+      Player: {},
+      greet: async ({ $this, player }) => {
+        // Load quest progress
+        const quest = await $this.get(player.$id, {
+          data: `^gHello stranger, people around here call me ^y${$this.name}^g, what can I do for ya?`,
+          items: ['*help*'],
+        });
 
         return new Promise((resolve) => {
-          socket.emit('singleRowMenu', { data, items: ['{exit}', '*riddle me*'] }, ({ text }) => {
+          player.socket.emit('menu', quest, ({ text }) => {
             switch (text) {
-              case '*riddle me*': return this.default.NPC.riddler.riddle({ $this, socket }).then(resolve);
-              default: return resolve(socket.emit('data', '^gGoodbye'));
+              case '*help*': return this.default.NPC.riddler.help({ $this, player }).then(resolve);
+              case '*shed*': return this.default.NPC.riddler.shed({ $this, player }).then(resolve);
+              case '*riddle*': return this.default.NPC.riddler.riddle({ $this, player }).then(resolve);
+              default: return resolve(player.socket.emit('data', '^gGoodbye'));
             }
           });
         });
       },
-      riddle: ({ $this, socket }) => {
-        socket.emit('dialog', `${$this.name} pauses to think for a moment...`);
+      help: ({ $this, player }) => {
+        return $this.set(player.$id, {
+          data: "^gI may have a spare tire in the ^yshed ^galthough it's been many years since I've gone in there. Go have a look for yourself, you're welcome to anything you can find in that musky old place.",
+          items: ['*shed*'],
+        }).then((res) => {
+          return this.default.NPC.riddler.greet({ $this, player });
+        });
+      },
+      shed: ({ $this, player }) => {
+        return $this.set(player.$id, {
+          data: "^gThe ^yshed ^gis located out back in the yard; perhaps you'll find something of use there.",
+          items: [],
+        }).then((res) => {
+          return this.default.NPC.riddler.greet({ $this, player });
+        });
+      },
+      riddle: ({ $this, player }) => {
+        player.socket.emit('dialog', `${$this.name} pauses to think for a moment...`);
         return axios.get('http://localhost:3000/riddle').then(({ data }) => {
-          if (data.error) return this.default.NPC.riddler.riddle({ $this, socket });
+          if (data.error) return this.default.NPC.riddler.riddle({ $this });
 
           return new Promise((resolve) => {
-            socket.emit('dialog', `^g${data.riddle} `, (answer) => {
-              if (answer.toLowerCase() === data.answer.toLowerCase()) return resolve(socket.emit('dialog', 'You smart...'));
-              return resolve(socket.emit('dialog', 'You dumb...'));
+            player.socket.emit('dialog', `^g${data.riddle} `, (answer) => {
+              if (answer.toLowerCase() === data.answer.toLowerCase()) return resolve(player.socket.emit('dialog', 'You smart...'));
+              return resolve(player.socket.emit('dialog', 'You dumb...'));
             });
           }).then(() => {
-            return this.default.NPC.riddler.greet({ $this, socket, data: '' });
+            return this.default.NPC.riddler.greet({ $this, player });
           });
         });
       },
@@ -97,14 +123,22 @@ export default {
     shed: {
       toBash: 100,
       toPick: 100,
-      status: 'open',
+      status: 'locked',
       connects: { n: 'Room.shed', s: 'Room.yard' },
     },
   },
 
   Key: {
     shed: {
+      name: 'Rusty iron key',
       targets: ['Door.shed'],
+    },
+  },
+
+  Chest: {
+    den: {
+      name: 'Large Chest',
+      items: ['Key.shed'],
     },
   },
 };

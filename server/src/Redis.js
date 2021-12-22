@@ -43,7 +43,7 @@ export default class Redis {
     const [id, field] = this.keys(key);
     return this.client.json.arrIndex(id, field, value).then((index) => {
       if (index < 0) return null;
-      return this.client.json.arrPop(id, `$${field}`, index);
+      return this.client.json.arrPop(id, `$${field}`, index).then((results = []) => results[0]);
     });
   }
 

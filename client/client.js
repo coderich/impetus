@@ -79,9 +79,10 @@ socket.on('clear', () => {
   terminal.clear();
 });
 
-socket.on('singleRowMenu', ({ data, items }, cb) => {
+socket.on('menu', ({ data, items = [] }, cb) => {
   abort();
-  terminal('\n').wrap(data);
+  items.unshift('{exit}');
+  if (data) terminal('\n\n').wrap(data)('\n');
   terminal.singleRowMenu(items, { align: 'center', fillIn: true }, (error, response) => {
     resume();
     cb({ index: response.selectedIndex, text: response.selectedText });

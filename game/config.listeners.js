@@ -2,17 +2,17 @@ export default {
   $ready: async ({ $dao }) => {
     await $dao.db.set('autoIncrement', 0);
     const config = await $dao.config.get('');
-    const data = { Room: config.Room, NPC: config.NPC, Door: config.Door };
+    const data = { Room: config.Room, NPC: config.NPC, Door: config.Door, Chest: config.Chest, Key: config.Key };
 
     return Promise.all(Object.entries(data).map(([root, value]) => {
       return Promise.all(Object.entries(value).map(async ([id, definition]) => {
         const key = `${root}.${id}`;
         const model = await $dao.db.set(key, definition);
-        await model.install();
+        await (model.install ? model.install() : Promise.resolve());
         return model;
       }));
     })).then((models) => {
-      return Promise.all(models.flat().map(model => model.init()));
+      return Promise.all(models.flat().map(model => (model.init ? model.init() : Promise.resolve())));
     });
   },
 
@@ -24,6 +24,7 @@ export default {
     const id = await $dao.db.inc('autoIncrement');
     const room = await $dao.db.get('Room.car');
     socket.data.Player = await $dao.db.set(`Player.${id}`, { id, room: 'Room.car' });
+    socket.data.Player.socket = socket;
     await socket.data.Player.toRoom({ $dao, socket, room });
 
     socket.emit(

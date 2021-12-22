@@ -20,3 +20,20 @@ export const roll = (dice) => {
 
   return eval(`${value} ${op} ${mod}`); // eslint-disable-line
 };
+
+export const findTargetIndex = (target, items) => {
+  const words = target.toLowerCase().split(' ');
+
+  return items.findIndex((it) => {
+    const tokens = it.toLowerCase().split(' ');
+
+    const info = words.reduce((prev, word) => {
+      const { i, found } = prev;
+      const j = tokens.slice(i).findIndex(tok => tok.indexOf(word) === 0);
+      if (found !== false) return j > -1 ? { found: true, i: j } : { found: false };
+      return prev;
+    }, { i: 0, found: null });
+
+    return Boolean(info.found);
+  });
+};

@@ -30,7 +30,7 @@ export default async (gameConfig) => {
             if (value != null) {
               const [root, method] = path.split('.');
               const $this = socket.data[root];
-              $this[method]({ $this, $dao, $emitter, socket, event: value });
+              $this[method]({ $this, $dao, $emitter, event: value });
               return true;
             }
 
