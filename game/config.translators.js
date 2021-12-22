@@ -24,10 +24,6 @@ export default {
       const matches = v.match(/^cl(?:ose|os|o)?\s*(.*)$/i);
       return matches ? matches[1] : null;
     },
-    'Player.ask': (v) => {
-      const matches = v.match(/^ask\s+(.+)\s+"(.*)"$/i);
-      return matches ? { target: matches[1], query: matches[2] } : null;
-    },
     'Player.unknown': v => v,
   },
 };

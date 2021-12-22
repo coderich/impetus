@@ -64,25 +64,31 @@ export default {
     riddler: {
       name: 'The Riddler',
       room: 'Room.car',
-      commands: {
-        greet: ({ socket }) => socket.emit('data', '^ghello'),
-        ask: ({ $this, socket, event: query }) => {
-          switch (query) {
-            case 'riddle': {
-              socket.emit('dialog', `${$this.name} pauses to think for a moment...`);
-              return axios.get('http://localhost:3000/riddle').then(({ data }) => {
-                if (data.error) return this.default.NPC.riddler.commands.ask({ $this, socket, event: query });
-                return socket.emit('dialog', data.riddle, (answer) => {
-                  if (answer.toLowerCase() === data.answer.toLowerCase()) return socket.emit('data', 'You smart...');
-                  return socket.emit('data', 'You dumb...');
-                });
-              });
+      greet: ({ $this, socket, data = '^gHello' }) => {
+
+        return new Promise((resolve) => {
+          socket.emit('singleRowMenu', { data, items: ['{exit}', '*riddle me*'] }, ({ text }) => {
+            switch (text) {
+              case '*riddle me*': return this.default.NPC.riddler.riddle({ $this, socket }).then(resolve);
+              default: return resolve(socket.emit('data', '^gGoodbye'));
             }
-            default: {
-              return socket.emit('data', `${$this.name} has nothing to tell you!`);
-            }
-          }
-        },
+          });
+        });
+      },
+      riddle: ({ $this, socket }) => {
+        socket.emit('dialog', `${$this.name} pauses to think for a moment...`);
+        return axios.get('http://localhost:3000/riddle').then(({ data }) => {
+          if (data.error) return this.default.NPC.riddler.riddle({ $this, socket });
+
+          return new Promise((resolve) => {
+            socket.emit('dialog', `^g${data.riddle} `, (answer) => {
+              if (answer.toLowerCase() === data.answer.toLowerCase()) return resolve(socket.emit('dialog', 'You smart...'));
+              return resolve(socket.emit('dialog', 'You dumb...'));
+            });
+          }).then(() => {
+            return this.default.NPC.riddler.greet({ $this, socket, data: '' });
+          });
+        });
       },
     },
   },

@@ -164,11 +164,13 @@ export default {
 
           // Exit
           await from.exit({ $dao, socket, player, from, to, dir });
+
+          // Scan
+          return $this.scan({ socket });
         },
         () => timeout(500),
       ).subscribe({
         error: e => socket.emit('data', e.message),
-        complete: () => $this.scan({ socket }),
       });
     },
 
@@ -176,7 +178,7 @@ export default {
       return $this.flow.get().pipe(
         async ({ $emitter }) => {
           const player = await $this.get();
-          return $emitter.emit('player:chat', { player });
+          return { player };
         },
         ({ player }) => {
           socket.broadcast.to(player.room).emit('data', `^g${player.name} says "${event}"`);
@@ -194,28 +196,10 @@ export default {
 
           if ($target) {
             if ($target.$type === 'NPC') {
-              await $dao.config.get(`${$target.$id}.commands.greet`).then((fn = () => {}) => {
+              await $dao.config.get(`${$target.$id}.greet`).then((fn = () => {}) => {
                 return fn({ $this: $target, $dao, socket });
               });
             }
-          }
-        },
-      );
-    },
-
-    ask: ({ $this, $dao, socket, event }) => {
-      const { target, query } = event;
-
-      $this.flow.get().pipe(
-        async () => {
-          const room = await $this.hydrate('room');
-          const units = await room.hydrate('units').then(results => results.filter(el => el.$type === 'NPC'));
-          const $target = units.find(unit => unit.name.toLowerCase().substring(0, target.length) === target);
-
-          if ($target) {
-            await $dao.config.get(`${$target.$id}.commands.ask`).then((fn = () => {}) => {
-              return fn({ $this: $target, $dao, socket, event: query.trim() });
-            });
           }
         },
       );

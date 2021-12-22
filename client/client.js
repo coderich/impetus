@@ -2,6 +2,8 @@ const { io } = require('socket.io-client');
 const { terminal } = require('terminal-kit');
 
 let input;
+let buffer;
+let aborted = false;
 terminal.grabInput();
 terminal.hideCursor(false);
 terminal.wrapColumn({ x: 5, width: 80 });
@@ -23,18 +25,29 @@ const inputField = () => {
   });
 };
 
+const abort = () => {
+  input.abort();
+  aborted = true;
+};
+
+const resume = () => {
+  terminal.wrap(buffer);
+  inputField();
+  aborted = false;
+  buffer = '';
+};
+
 socket.on('connect', () => {
   terminal.clear();
 });
 
 socket.on('dialog', (event, cb) => {
-  input.abort();
-  terminal.wrap('\n');
-  terminal.wrap(event);
+  abort();
+  terminal('\n').wrap(event);
   if (cb) {
     terminal.inputField((err, value) => {
       cb(value);
-      inputField();
+      resume();
     });
   }
 
@@ -56,13 +69,23 @@ socket.on('dialog', (event, cb) => {
 });
 
 socket.on('data', (event) => {
-  terminal.wrap('\n');
-  terminal.wrap(`${event}\n^:[HP=30]: `);
+  const msg = `\n${event}`;
+  if (aborted) buffer += msg;
+  else terminal.wrap(`${msg}\n^:[HP=30]: `);
   input.rebase();
 });
 
 socket.on('clear', () => {
   terminal.clear();
+});
+
+socket.on('singleRowMenu', ({ data, items }, cb) => {
+  abort();
+  terminal('\n').wrap(data);
+  terminal.singleRowMenu(items, { align: 'center', fillIn: true }, (error, response) => {
+    resume();
+    cb({ index: response.selectedIndex, text: response.selectedText });
+  });
 });
 
 inputField();
