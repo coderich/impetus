@@ -32,7 +32,7 @@ export const roll = (dice) => {
 };
 
 export const findTargetIndex = (target, items) => {
-  const words = target.toLowerCase().split(' ');
+  const words = target.toLowerCase().split(' ').map(w => w.trim());
 
   return items.findIndex((it) => {
     const tokens = it.toLowerCase().split(' ');
@@ -63,18 +63,18 @@ export const spawn = ($this, $dao, spawns = [], locals = {}) => {
   const now = new Date().getTime();
 
   return Promise.all(spawns.map(async (el) => {
-    const { spawn: details, pushTo, assign, respawnAt } = el;
+    const { spawn: details, to, assign, respawnAt, cmd = 'push' } = el;
     const [respawn, num, ...templates] = details;
 
     if (!respawnAt || (respawn && now > respawnAt)) {
       el.respawnAt = now + roll(respawn);
-      const existingTemplates = await $this.hydrate(Swig.render(pushTo, { locals }), []).then(models => models.map(model => model.template).filter(Boolean));
+      const existingTemplates = await $this.hydrate(Swig.render(to, { locals }), []).then(models => models.map(model => model.template).filter(Boolean));
       const newTemplates = Array.from(Array(roll(num))).map(() => randomElement(templates)).filter(template => existingTemplates.indexOf(template) === -1);
 
       return Promise.all(newTemplates.map(template => fromTemplate($dao, template))).then((models) => {
         return Promise.all(models.map((model) => {
           return Promise.all([
-            $this.push(Swig.render(pushTo, { locals }), model.$id),
+            $this[cmd](Swig.render(to, { locals }), model.$id),
             assign ? model.set(assign, $this.$id) : Promise.resolve(),
           ]).then(() => model);
         }));

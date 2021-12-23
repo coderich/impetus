@@ -33,6 +33,10 @@ export default {
       const matches = v.match(/^\bcl(?:ose|os|o)?\b\s*(.*)$/i);
       return matches ? matches[1] : null;
     },
+    'Player.use': (v) => {
+      const matches = v.match(/^\buse\b\s*(.*)$/i);
+      return matches ? matches[1] : null;
+    },
     'Player.unknown': v => v,
   },
 };

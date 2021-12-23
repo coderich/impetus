@@ -22,7 +22,7 @@ export default {
     // Player setup
     const id = await $dao.db.inc('autoIncrement');
     const room = await $dao.db.get('Room.car');
-    socket.data.Player = await $dao.db.set(`Player.${id}`, { id, room: 'Room.car' });
+    socket.data.Player = await $dao.db.set(`Player.${id}`, { id, room: 'Room.car', items: [] });
     socket.data.Player.socket = socket;
     await socket.data.Player.toRoom({ $dao, socket, room });
 

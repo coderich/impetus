@@ -6,7 +6,7 @@ let buffer;
 let aborted = false;
 terminal.grabInput();
 terminal.hideCursor(false);
-terminal.wrapColumn({ x: 5, width: 80 });
+terminal.wrapColumn({ width: 80 });
 const socket = io('http://localhost:3003');
 
 // const promiseChain = (promises) => {
@@ -82,8 +82,8 @@ socket.on('clear', () => {
 socket.on('menu', ({ data, items = [] }, cb) => {
   abort();
   items.unshift('{exit}');
-  if (data) terminal('\n\n').wrap(data)('\n');
-  terminal.singleRowMenu(items, { align: 'center', fillIn: true }, (error, response) => {
+  if (data) terminal('\n').wrap(data);
+  terminal.singleRowMenu(items, { fillIn: true }, (error, response) => {
     resume();
     cb({ index: response.selectedIndex, text: response.selectedText });
   });

@@ -1,5 +1,5 @@
-import data from './config.data';
-import models from './config.models';
+import * as data from './data';
+import * as models from './models';
 import listeners from './config.listeners';
 import translators from './config.translators';
 
