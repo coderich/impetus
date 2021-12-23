@@ -6,8 +6,13 @@ export default {
     car: {
       name: 'Roadside, Dirt Path Entrance',
       description: 'You are standing at the entrace of a small dirt path along side a secluded road. From time to time you can hear the whisper of trees as the wind gently blows. A ^yBlack Audi A4^ sits motionless on the side of the road; victim of a flat tire.',
-      items: ['Chest.den'],
       exits: { n: 'Room.street' },
+      spawns: [
+        {
+          pushTo: 'items',
+          spawn: [null, 1, 'Container.den'],
+        },
+      ],
     },
     street: {
       name: 'Dirt Path',
@@ -20,10 +25,16 @@ export default {
       exits: { n: 'Door.shed', s: 'Room.street', w: 'Room.foyer' },
     },
     shed: {
-      name: 'Shed',
+      name: 'Dirty Shed',
       description: chance.paragraph(),
       exits: { s: 'Door.shed' },
-      spawns: ['1d1000+1000', '1d3', 'Creature.ant', 'Creature.rat'],
+      spawns: [
+        {
+          pushTo: 'units',
+          assign: 'room',
+          spawn: ['1d1000+1000', '2d3', 'Creature.ant', 'Creature.rat'],
+        },
+      ],
     },
     foyer: {
       name: 'House, Foyer',
@@ -48,7 +59,7 @@ export default {
     den: {
       name: 'House, Den',
       description: chance.paragraph(),
-      items: ['Chest.den'],
+      items: ['Container.den'],
       exits: { s: 'Room.dining' },
     },
   },
@@ -104,7 +115,7 @@ export default {
       riddle: ({ $this, player }) => {
         player.socket.emit('dialog', `${$this.name} pauses to think for a moment...`);
         return axios.get('http://localhost:3000/riddle').then(({ data }) => {
-          if (data.error) return this.default.NPC.riddler.riddle({ $this });
+          if (data.error) return this.default.NPC.riddler.riddle({ $this, player });
 
           return new Promise((resolve) => {
             player.socket.emit('dialog', `^g${data.riddle} `, (answer) => {
@@ -130,15 +141,21 @@ export default {
 
   Key: {
     shed: {
-      name: 'Rusty iron key',
+      name: 'rusty iron key',
       targets: ['Door.shed'],
     },
   },
 
-  Chest: {
+  Container: {
     den: {
-      name: 'Large Chest',
-      items: ['Key.shed'],
+      name: 'chest',
+      items: { Player: {} },
+      spawns: [
+        {
+          pushTo: 'items.{{ player.$id }}',
+          spawn: [1, 1, 'Key.shed'],
+        },
+      ],
     },
   },
 };

@@ -1,26 +1,12 @@
+import { get } from 'lodash';
 import { isDirection } from './config.translators';
-import { timeout, roll, randomElement, directions, rdirections, findTargetIndex } from './service';
+import { timeout, randomElement, directions, rdirections, findTargetIndex, spawn } from './service';
 
 export default {
   Room: {
-    install: async ({ $this }) => {
-      const room = await $this.get();
-      if (room.spawns) await room.set('respawnTime', new Date().getTime() + roll(room.spawns[0]));
-    },
-
-    init: ({ $this }) => {
-      $this.flow.get('enter').subscribe({
-        next: async () => {
-          const now = new Date().getTime();
-          const $room = await $this.get();
-
-          if ($room.spawns && now > $room.respawnTime) {
-            const units = await $room.hydrate('units', []);
-            const creatures = units.filter(unit => unit.$type === 'Creature');
-            if (creatures.length === 0) $room.spawn();
-          }
-        },
-      });
+    install: async ({ $this, $dao }) => {
+      if (!$this.items) await $this.set('items', []);
+      if (!$this.units) await $this.set('units', []);
     },
 
     displayName: () => null,
@@ -35,40 +21,22 @@ export default {
       return player.fromRoom({ $dao, room: from.$id });
     },
 
-    spawn: ({ $this, $dao }) => {
-      const [delay, num, ...models] = $this.spawns;
-
-      return Promise.all(Array.from(new Array(roll(num))).map(async () => {
-        const id = await $dao.db.inc('autoIncrement');
-        const blueprint = randomElement(models);
-        const [root] = blueprint.split('.');
-        const key = `${root}.${id}`;
-        const data = await $dao.config.get(blueprint);
-        data.room = $this.$id;
-        const unit = await $dao.db.set(key, data);
-        await unit.init();
-        await $this.push('units', key);
-        await $this.set('respawnTime', new Date().getTime() + roll(delay));
-      }));
-    },
-
-    look: async ({ $this, brief = false, filter = () => true }) => {
-      const room = await $this.get();
-      const units = await room.hydrate('units', []).then(results => results.filter(filter));
-      const items = await room.hydrate('items', []);
-      const exits = await room.hydrate('exits', {});
-      const description = !brief && room.description ? `    ${room.description}\n^:` : '';
+    look: async ({ $this, $dao, brief = false, filter = () => true }) => {
+      await spawn($this, $dao, $this.spawns);
+      const units = await $this.hydrate('units', []).then(results => results.filter(filter));
+      const items = await $this.hydrate('items', []);
+      const exits = await $this.hydrate('exits', {});
+      const description = !brief && $this.description ? `    ${$this.description}\n^:` : '';
       const notice = items.length ? `^cYou notice ${items.map(i => i.name).join(', ')} here.\n` : '';
       const alsoHere = units.length ? `^mAlso here:^ ${units.map(u => u.displayName()).join(', ')}\n` : '';
       const obviousExits = `^gObvious exits: ${Object.entries(exits).map(([k, v]) => [v.displayName(), directions[k]].filter(Boolean).join(' ')).join(', ')}`;
-      return `^+^C${room.name}\n^:${description}${notice}${alsoHere}${obviousExits}`;
+      return `^+^C${$this.name}\n^:${description}${notice}${alsoHere}${obviousExits}`;
     },
   },
 
   Player: {
     toRoom: async ({ $this, $dao, room }) => {
       $this.socket.join(room.$id);
-      room.flow.get('enter').pipe(() => ({ player: $this }));
       await room.push('units', $this.$id);
       await $this.set('room', room.$id);
     },
@@ -225,16 +193,16 @@ export default {
   },
 
   Creature: {
-    install: () => {},
+    // install: () => {},
 
-    init: async ({ $this, $dao }) => {
-      $this.scan();
-      const room = await $dao.db.ref($this.room);
+    // init: async ({ $this, $dao }) => {
+    //   $this.scan();
+    //   const room = await $dao.db.ref($this.room);
 
-      room.flow.get('enter').subscribe({
-        next: () => $this.scan(),
-      });
-    },
+    //   room.flow.get('enter').subscribe({
+    //     next: () => $this.scan(),
+    //   });
+    // },
 
     displayName: ({ $this }) => `^M${$this.name}`,
 
@@ -288,22 +256,10 @@ export default {
       $dao.db.ref($this.room).push('units', $this.$id);
     },
 
-    init: () => {},
-
     displayName: ({ $this }) => `^:${$this.name}`,
   },
 
   Door: {
-    install: () => {},
-
-    init: async ({ $this, $dao, $emitter }) => {
-      // const { listeners = {} } = await $dao.config.get($this.$id);
-
-      // Object.entries(listeners).forEach(([key, cb]) => {
-      //   $emitter.on(key, ($event, next) => cb({ $this, $dao, $emitter, $event }, next));
-      // });
-    },
-
     displayName: ({ $this }) => `${$this.status} door`,
 
     look: ({ $this, dir }) => {
@@ -353,16 +309,25 @@ export default {
     },
   },
 
-  Chest: {
-    open: async ({ $this, player, data }) => {
-      const items = await $this.hydrate('items', []);
+  Container: {
+    open: async ({ $this, $dao, player, data }) => {
+      const container = await $this.get();
+      const itemsPath = container.items.Player ? `items.${player.$id}` : 'items';
+
+      if (!get(container, itemsPath)) {
+        await $this.set(itemsPath, []);
+        await spawn($this, $dao, $this.spawns, { player });
+      }
+
+      const items = await container.hydrate(itemsPath, []);
+
       player.socket.emit('menu', { data, items: items.map(i => i.name) }, async ({ index }) => {
         if (!index) return player.scan();
         const item = items[index - 1];
-        const id = await $this.pull('items', item.$id);
-        if (!id) return $this.open({ player, data: 'That item is no longer there.' });
+        const id = await container.pull(itemsPath, item.$id);
+        if (!id) return container.open({ player, data: 'That item is no longer there.' });
         await player.push('items', id);
-        return $this.open({ player, data: `You took the ${item.name}.` });
+        return container.open({ player, data: `You take the ${item.name}.` });
       });
     },
   },

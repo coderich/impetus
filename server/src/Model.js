@@ -9,7 +9,7 @@ import { daoMethods } from './Util';
 export default class Model {
   constructor($dao, $emitter, instance, key, value, model = {}) {
     const root = key.split('.').slice(0, 2);
-    return Model.wrapInstance($dao, $emitter, value, instance, model, root);
+    return Model.wrapInstance($dao, $emitter, { ...value }, instance, model, root);
   }
 
   static wrapInstance($dao, $emitter, wrapper, instance, model, root) {

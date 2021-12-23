@@ -2,9 +2,8 @@ export default {
   $ready: async ({ $dao }) => {
     await $dao.db.set('autoIncrement', 0);
     const config = await $dao.config.get('');
-    const data = { Room: config.Room, NPC: config.NPC, Door: config.Door, Chest: config.Chest, Key: config.Key };
 
-    return Promise.all(Object.entries(data).map(([root, value]) => {
+    return Promise.all(Object.entries(config).map(([root, value]) => {
       return Promise.all(Object.entries(value).map(async ([id, definition]) => {
         const key = `${root}.${id}`;
         const model = await $dao.db.set(key, definition);
