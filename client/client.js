@@ -4,6 +4,7 @@ const { terminal } = require('terminal-kit');
 let input;
 let buffer;
 let aborted = false;
+let status = '';
 terminal.grabInput();
 terminal.hideCursor(false);
 terminal.wrapColumn({ width: 80 });
@@ -41,6 +42,10 @@ socket.on('connect', () => {
   terminal.clear();
 });
 
+socket.on('status', (event) => {
+  status = `[HP=${event.hp}]`;
+});
+
 socket.on('dialog', (event, cb) => {
   abort();
   terminal('\n').wrap(event);
@@ -71,7 +76,7 @@ socket.on('dialog', (event, cb) => {
 socket.on('data', (event) => {
   const msg = `\n${event}`;
   if (aborted) buffer += msg;
-  else terminal.wrap(`${msg}\n^:[HP=30]: `);
+  else terminal.wrap(`${msg}\n^:${status}: `);
   input.rebase();
 });
 

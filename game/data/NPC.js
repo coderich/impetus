@@ -15,34 +15,34 @@ export default {
       return new Promise((resolve) => {
         player.socket.emit('menu', quest, ({ text }) => {
           switch (text) {
-            case '*help*': return this.default.NPC.riddler.help({ $this, player }).then(resolve);
-            case '*shed*': return this.default.NPC.riddler.shed({ $this, player }).then(resolve);
-            case '*riddle*': return this.default.NPC.riddler.riddle({ $this, player }).then(resolve);
-            default: return resolve(player.socket.emit('data', '^gGoodbye'));
+            case '*help*': return this.default.riddler.help({ $this, player }).then(resolve);
+            case '*shed*': return this.default.riddler.shed({ $this, player }).then(resolve);
+            case '*riddle*': return this.default.riddler.riddle({ $this, player }).then(resolve);
+            default: return player.scan().then(resolve);
           }
         });
       });
     },
     help: ({ $this, player }) => {
       return $this.set(player.$id, {
-        data: "^gI may have a spare tire in the ^yshed ^galthough it's been many years since I've gone in there. Go have a look for yourself, you're welcome to anything you can find in that musky old place.",
+        data: "^gI may have a spare tire in the ^yshed; ^gthough it's been many years since I've gone in there. Go have a look for yourself, you're welcome to anything you can find in that musky old place.",
         items: ['*shed*'],
       }).then((res) => {
-        return this.default.NPC.riddler.greet({ $this, player });
+        return this.default.riddler.greet({ $this, player });
       });
     },
     shed: ({ $this, player }) => {
       return $this.set(player.$id, {
-        data: "^gThe ^yshed ^gis located out back in the yard; perhaps you'll find something of use there.",
+        data: "^gThe ^yshed ^gis located out in the yard; perhaps you'll find something of use there.",
         items: [],
       }).then((res) => {
-        return this.default.NPC.riddler.greet({ $this, player });
+        return this.default.riddler.greet({ $this, player });
       });
     },
     riddle: ({ $this, player }) => {
       player.socket.emit('dialog', `${$this.name} pauses to think for a moment...`);
       return axios.get('http://localhost:3000/riddle').then(({ data }) => {
-        if (data.error) return this.default.NPC.riddler.riddle({ $this, player });
+        if (data.error) return this.default.riddler.riddle({ $this, player });
 
         return new Promise((resolve) => {
           player.socket.emit('dialog', `^g${data.riddle} `, (answer) => {
@@ -50,7 +50,7 @@ export default {
             return resolve(player.socket.emit('dialog', 'You dumb...'));
           });
         }).then(() => {
-          return this.default.NPC.riddler.greet({ $this, player });
+          return this.default.riddler.greet({ $this, player });
         });
       });
     },

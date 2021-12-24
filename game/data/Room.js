@@ -4,24 +4,23 @@ export default {
   car: {
     name: 'Roadside, Dirt Path Entrance',
     description: 'You are standing at the entrace of a small dirt path along side a secluded road. From time to time you can hear the whisper of trees as the wind gently blows. A ^yBlack Audi A4^ sits motionless on the side of the road; victim of a flat tire.',
-    exits: { n: 'Room.street' },
-    units: ['NPC.riddler'],
+    exits: { n: 'Room.path' },
+  },
+  path: {
+    name: 'Dirt Path',
+    description: chance.paragraph(),
+    exits: { n: 'Room.yard', s: 'Room.car' },
+  },
+  yard: {
+    name: 'House, Yard',
+    description: chance.paragraph(),
+    exits: { n: 'Door.shed', s: 'Room.path', w: 'Room.house' },
     spawns: [
       {
         to: 'items',
         spawn: [null, 1, 'Container.den'],
       },
     ],
-  },
-  street: {
-    name: 'Dirt Path',
-    description: chance.paragraph(),
-    exits: { n: 'Room.yard', s: 'Room.car' },
-  },
-  yard: {
-    name: 'Dirt Path, Dead End',
-    description: chance.paragraph(),
-    exits: { n: 'Door.shed', s: 'Room.street', w: 'Room.foyer' },
   },
   shed: {
     name: 'Dingy Shed',
@@ -35,10 +34,15 @@ export default {
       },
     ],
   },
+  house: {
+    name: 'House, Entrance',
+    description: chance.paragraph(),
+    exits: { e: 'Room.yard', w: 'Door.house' },
+  },
   foyer: {
     name: 'House, Foyer',
     description: chance.paragraph(),
-    exits: { e: 'Room.yard', w: 'Room.living' },
+    exits: { e: 'Door.house', w: 'Room.living' },
   },
   living: {
     name: 'House, Living Room',
@@ -54,11 +58,17 @@ export default {
     name: 'House, Kitchen',
     description: chance.paragraph(),
     exits: { e: 'Room.dining' },
+    units: ['NPC.riddler'],
   },
   den: {
     name: 'House, Den',
     description: chance.paragraph(),
-    items: ['Container.den'],
     exits: { s: 'Room.dining' },
+    spawns: [
+      {
+        to: 'items',
+        spawn: [null, 1, 'Container.den'],
+      },
+    ],
   },
 };

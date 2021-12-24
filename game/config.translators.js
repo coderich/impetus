@@ -17,7 +17,7 @@ export default {
       const matches = v.match(/^\bgr(?:eet|ee|e)?\b\s*(.*)$/i);
       return matches ? matches[1] : null;
     },
-    'Player.pickup': (v) => {
+    'Player.take': (v) => {
       const matches = v.match(/^\bg(?:et|e)?\b\s*(.*)$/i);
       return matches ? matches[1] : null;
     },

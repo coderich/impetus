@@ -8,8 +8,9 @@ export default {
 
   displayName: () => null,
 
-  enter: ({ $dao, player, from, to }) => {
+  enter: ({ $this, $dao, player, from, to }) => {
     player.socket.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.`);
+    $this.flow.get('enter').pipe(() => {});
     return player.toRoom({ $dao, room: to });
   },
 

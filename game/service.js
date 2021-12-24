@@ -1,3 +1,4 @@
+import { get } from 'lodash';
 import Chance from 'chance';
 import Swig from 'swig-templates';
 
@@ -54,9 +55,7 @@ export const fromTemplate = async ($dao, template) => {
   const key = `${root}.${id}`;
   const data = await $dao.config.get(template);
   data.template = template;
-  const model = await $dao.db.set(key, data);
-  if (model.init) await model.init();
-  return model;
+  return $dao.db.set(key, data);
 };
 
 export const spawn = ($this, $dao, spawns = [], locals = {}) => {
@@ -76,7 +75,7 @@ export const spawn = ($this, $dao, spawns = [], locals = {}) => {
           return Promise.all([
             $this[cmd](Swig.render(to, { locals }), model.$id),
             assign ? model.set(assign, $this.$id) : Promise.resolve(),
-          ]).then(() => model);
+          ]).then(() => (model.init ? model.init() : Promise.resolve()));
         }));
       });
     }
@@ -85,4 +84,18 @@ export const spawn = ($this, $dao, spawns = [], locals = {}) => {
   })).then((models) => {
     return $this.set('spawns', spawns).then(() => models);
   });
+};
+
+export const attackOutcome = (source, target, attack) => {
+  const { acc, dmg } = attack;
+  const outcome = { hit: false, verb: randomElement(attack.misses) };
+  const hitRoll = roll(acc.base) + Object.entries(acc.mod).reduce((prev, [k, v]) => prev + source.stats[k] * v, 0);
+
+  if (hitRoll >= target.stats.ac) {
+    outcome.hit = true;
+    outcome.dmg = roll(dmg.base) + Object.entries(dmg.mod).reduce((prev, [k, v]) => prev + source.stats[k] * v, 0);
+    outcome.verb = randomElement(attack.hits);
+  }
+
+  return outcome;
 };

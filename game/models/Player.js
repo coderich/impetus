@@ -15,10 +15,19 @@ export default {
 
   displayName: ({ $this }) => `^M${$this.name}`,
 
+  status: async ({ $this }) => {
+    const player = await $this.get();
+    return $this.socket.emit('status', player.stats);
+  },
+
   scan: async ({ $this }) => {
     const player = await $this.get();
     const room = await player.hydrate('room');
     $this.socket.emit('data', await room.look({ brief: true, filter: el => el.$id !== $this.$id }));
+  },
+
+  take: () => {
+
   },
 
   look: ({ $this, event: target }) => {
@@ -175,8 +184,12 @@ export default {
   },
 
   inventory: async ({ $this }) => {
-    const items = await $this.hydrate('items');
-    $this.socket.emit('data', items.map(item => item.name).join(', '));
+    $this.flow.get().pipe(
+      async () => {
+        const items = await $this.hydrate('items');
+        $this.socket.emit('data', items.map(item => item.name).join(', '));
+      },
+    );
   },
 
   none: ({ $this }) => {
