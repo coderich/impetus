@@ -1,7 +1,7 @@
 import Dao from './src/Dao';
 import Data from './src/Data';
 import Redis from './src/Redis';
-import Server from './src/Server';
+import { IOServer, TelnetServer } from './src/Server';
 import { emitter } from './src/ChainEmitter';
 
 export default async (gameConfig) => {
@@ -13,7 +13,8 @@ export default async (gameConfig) => {
   const $emitter = emitter;
   const redis = new Redis(gameConfig.redis);
   const $dao = new Dao($emitter, redis, new Data({}), new Data(gameConfig.data), gameConfig.models, sockets);
-  const $server = new Server(gameConfig.server);
+  const $io = new IOServer(gameConfig.server);
+  const $telnet = new TelnetServer();
 
   emitter.on('$system', async ({ type, socket }) => {
     if (type === '$socket:connection') {
@@ -28,7 +29,7 @@ export default async (gameConfig) => {
       $this.scan();
 
       Object.entries(gameConfig.translators).forEach(([on, directive]) => {
-        socket.on(on, (event) => {
+        emitter.on(`$socket:${on}`, (event) => {
           Object.entries(directive).some(([path, fn]) => {
             const value = fn(event.trim());
 
@@ -48,10 +49,12 @@ export default async (gameConfig) => {
   emitter.on('$system', ({ type, socket, event }) => {
     const listener = gameConfig.listeners[type];
     if (listener) listener({ $dao, $emitter, socket, event });
+    emitter.emit(type, event);
   });
 
-  // Start server
+  // Start server(s)
   await redis.connect();
-  $server.listen(gameConfig.server.port || 3003);
+  $io.listen(gameConfig.server.port || 3003);
+  $telnet.listen(23);
   emitter.emit('$system', { type: '$ready' });
 };

@@ -1,34 +1,61 @@
 import SocketServer from 'socket.io';
-import Data from './Data';
+import TelnetLib from 'telnetlib';
+import { IOSocket, TelnetSocket } from './Socket';
 import { emitter } from './ChainEmitter';
-import { toDataAccessObject } from './Util';
 
-export default class Server {
-  constructor(config) {
+export class IOServer {
+  constructor() {
     const server = SocketServer();
 
-    server.on('connection', (socket) => {
-      socket.$data = toDataAccessObject(new Data(socket.data));
+    server.on('connection', (sock) => {
+      const socket = new IOSocket(sock);
+
       emitter.emit('$system', { type: '$socket:connection', socket });
 
-      socket.on('disconnecting', (reason) => {
+      sock.on('disconnecting', (reason) => {
         emitter.emit('$system', { type: '$socket:disconnecting', socket, event: reason });
       });
 
-      socket.on('disconnect', (reason) => {
+      sock.on('disconnect', (reason) => {
         emitter.emit('$system', { type: '$socket:disconnect', socket, event: reason });
         socket.removeAllListeners();
       });
 
-      socket.on('error', (error) => {
+      sock.on('error', (error) => {
         emitter.emit('$system', { type: '$socket:error', socket, event: error });
       });
 
-      socket.onAny((type, event) => {
+      sock.onAny((type, event) => {
         emitter.emit('$system', { type: `$socket:${type}`, socket, event });
       });
     });
 
     return server;
+  }
+}
+
+export class TelnetServer {
+  constructor() {
+    const { GMCP, ECHO } = TelnetLib.options;
+
+    return TelnetLib.createServer({ localOptions: [GMCP, ECHO] }, (sock) => {
+      const socket = new TelnetSocket(sock);
+
+      sock.on('negotiated', () => {
+        emitter.emit('$system', { type: '$socket:connection', socket });
+      });
+
+      sock.on('data', (data) => {
+        emitter.emit('$system', { type: '$socket:data', socket, event: data.toString('utf-8') });
+      });
+
+      sock.on('error', (error) => {
+        emitter.emit('$system', { type: '$socket:error', socket, event: error });
+      });
+
+      sock.on('end', (reason) => {
+        emitter.emit('$system', { type: '$socket:disconnect', socket, event: reason });
+      });
+    });
   }
 }

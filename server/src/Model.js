@@ -24,10 +24,6 @@ export default class Model {
         value: root[0],
         ...config,
       },
-      socket: {
-        value: sockets[root.join('.')],
-        ...config,
-      },
     });
 
     /**
