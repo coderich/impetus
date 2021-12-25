@@ -10,6 +10,6 @@ export default {
     const target = await $dao.db.get(exit, {});
     if (!target.unlock) throw new Error('There is nothing to unlock in that direction.');
     if (key.targets.indexOf(exit) === -1 && key.targets.indexOf(target.template) === -1) throw new Error(`The ${key.name} does not work on the ${target.name}.`);
-    return target.unlock().then(() => player.socket.emit('data', `You unlock the ${target.name}.`));
+    return target.unlock().then(() => player.emit('data', `You unlock the ${target.name}.`));
   },
 };

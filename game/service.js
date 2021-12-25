@@ -86,7 +86,7 @@ export const spawn = ($this, $dao, spawns = [], locals = {}) => {
   });
 };
 
-export const attackOutcome = (source, target, attack) => {
+export const resolveAttack = async (source, target, attack) => {
   const { acc, dmg } = attack;
   const outcome = { hit: false, verb: randomElement(attack.misses) };
   const hitRoll = roll(acc.base) + Object.entries(acc.mod).reduce((prev, [k, v]) => prev + source.stats[k] * v, 0);
@@ -97,5 +97,7 @@ export const attackOutcome = (source, target, attack) => {
     outcome.verb = randomElement(attack.hits);
   }
 
-  return outcome;
+  if (outcome.hit) {
+    await target.inc('stats.hp', -outcome.dmg).then(() => target.status());
+  }
 };

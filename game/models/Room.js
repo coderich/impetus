@@ -8,14 +8,17 @@ export default {
 
   displayName: () => null,
 
-  enter: ({ $this, $dao, player, from, to }) => {
-    player.socket.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.`);
-    $this.flow.get('enter').pipe(() => {});
+  enter: async ({ $this, $dao, player, from, to }) => {
+    const creatures = await to.hydrate('units').then(units => units.filter(u => u.$type === 'Creature'));
+    player.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.`);
+    creatures.forEach(creature => creature.scan());
     return player.toRoom({ $dao, room: to });
   },
 
-  exit: ({ $dao, player, from, to }) => {
-    player.socket.broadcast.to(from.$id).emit('data', `^y${player.name}^ has left the room.`);
+  exit: async ({ $dao, player, from, to }) => {
+    const creatures = await from.hydrate('units').then(units => units.filter(u => u.$type === 'Creature'));
+    player.broadcast.to(from.$id).emit('data', `^y${player.name}^ has left the room.`);
+    creatures.forEach(creature => creature.scan());
     return player.fromRoom({ $dao, room: from.$id });
   },
 

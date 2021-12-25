@@ -13,7 +13,7 @@ export default {
       });
 
       return new Promise((resolve) => {
-        player.socket.emit('menu', quest, ({ text }) => {
+        player.emit('menu', quest, ({ text }) => {
           switch (text) {
             case '*help*': return this.default.riddler.help({ $this, player }).then(resolve);
             case '*shed*': return this.default.riddler.shed({ $this, player }).then(resolve);
@@ -40,14 +40,14 @@ export default {
       });
     },
     riddle: ({ $this, player }) => {
-      player.socket.emit('dialog', `${$this.name} pauses to think for a moment...`);
+      player.emit('dialog', `${$this.name} pauses to think for a moment...`);
       return axios.get('http://localhost:3000/riddle').then(({ data }) => {
         if (data.error) return this.default.riddler.riddle({ $this, player });
 
         return new Promise((resolve) => {
-          player.socket.emit('dialog', `^g${data.riddle} `, (answer) => {
-            if (answer.toLowerCase() === data.answer.toLowerCase()) return resolve(player.socket.emit('dialog', 'You smart...'));
-            return resolve(player.socket.emit('dialog', 'You dumb...'));
+          player.emit('dialog', `^g${data.riddle} `, (answer) => {
+            if (answer.toLowerCase() === data.answer.toLowerCase()) return resolve(player.emit('dialog', 'You smart...'));
+            return resolve(player.emit('dialog', 'You dumb...'));
           });
         }).then(() => {
           return this.default.riddler.greet({ $this, player });

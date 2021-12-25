@@ -25,7 +25,7 @@ export default {
       case 'locked': throw new Error(`The ${$this.name} is locked.`);
       case 'closed': {
         await $this.set('status', 'open').then(() => {
-          player.socket.emit('data', `You open the ${$this.name}.`);
+          player.emit('data', `You open the ${$this.name}.`);
         });
         break;
       }
@@ -39,7 +39,7 @@ export default {
       case 'locked': throw new Error(`The ${$this.name} is already closed and locked.`);
       case 'open': {
         await $this.set('status', 'closed').then(() => {
-          player.socket.emit('data', `You close the ${$this.name}.`);
+          player.emit('data', `You close the ${$this.name}.`);
         });
         break;
       }

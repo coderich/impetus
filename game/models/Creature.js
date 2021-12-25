@@ -1,10 +1,8 @@
-import { roll, timeout, randomElement, attackOutcome } from '../service';
+import { roll, timeout, randomElement, resolveAttack } from '../service';
 
 export default {
   init: async ({ $this, $dao }) => {
     const creature = await $this.get();
-    const room = await $dao.db.ref(creature.room);
-    room.flow.get('enter').subscribe({ next: () => $this.scan() });
     const newStats = Object.entries(creature.stats).reduce((prev, [k, v]) => Object.assign(prev, { [k]: roll(v) }), {});
     await $this.set('stats', newStats);
     return $this.scan();
@@ -50,7 +48,7 @@ export default {
       // Attack
       async ({ $target }) => {
         const attack = await $dao.db.get(randomElement(creature.attacks));
-        const outcome = attackOutcome(creature, $target, attack);
+        await resolveAttack(creature, $target, attack);
         return timeout(1500); // Mandatory recoil at this point
       },
     ).subscribe({

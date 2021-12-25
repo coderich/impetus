@@ -13,6 +13,7 @@
     "lodash": "^4.17.21",
     "redis": "^4.0.0",
     "rxjs": "^7.4.0",
-    "socket.io": "^4.4.0"
+    "socket.io": "^4.4.0",
+    "telnet-socket": "^0.2.3"
   }
 }

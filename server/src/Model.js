@@ -7,12 +7,12 @@ import { daoMethods } from './Util';
  * Converts the passed in value to a "model" with DAO + user-defined methods attached
  */
 export default class Model {
-  constructor($dao, $emitter, instance, key, value, model = {}) {
+  constructor($dao, $emitter, instance, key, value, model = {}, sockets) {
     const root = key.split('.').slice(0, 2);
-    return Model.wrapInstance($dao, $emitter, { ...value }, instance, model, root);
+    return Model.wrapInstance($dao, $emitter, { ...value }, instance, model, root, sockets);
   }
 
-  static wrapInstance($dao, $emitter, wrapper, instance, model, root) {
+  static wrapInstance($dao, $emitter, wrapper, instance, model, root, sockets) {
     const config = { writable: true, enumerable: false, configurable: true };
 
     Object.defineProperties(wrapper, {
@@ -22,6 +22,10 @@ export default class Model {
       },
       $type: {
         value: root[0],
+        ...config,
+      },
+      socket: {
+        value: sockets[root.join('.')],
         ...config,
       },
     });
@@ -63,6 +67,32 @@ export default class Model {
       },
       flow: {
         value: new Stream(wrapper.$id),
+        ...config,
+      },
+      emit: {
+        value: (...args) => {
+          return sockets[wrapper.$id].emit(...args);
+        },
+        ...config,
+      },
+      broadcast: {
+        value: {
+          to: (...toArgs) => ({
+            emit: (...emitArgs) => sockets[wrapper.$id].broadcast.to(...toArgs).emit(...emitArgs),
+          }),
+        },
+        ...config,
+      },
+      join: {
+        value: (...args) => {
+          return sockets[wrapper.$id].join(...args);
+        },
+        ...config,
+      },
+      leave: {
+        value: (...args) => {
+          return sockets[wrapper.$id].leave(...args);
+        },
         ...config,
       },
     });

@@ -6,7 +6,8 @@
   "description": "Impetus",
   "scripts": {
     "test": "jest",
-    "start": "node --trace-uncaught -r esm game/index.js"
+    "start": "node --trace-uncaught -r esm game/index.js",
+    "telnet": "node --trace-uncaught -r esm server/telnet.js"
   },
   "dependencies": {
     "axios": "^0.24.0",

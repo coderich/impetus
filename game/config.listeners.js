@@ -17,15 +17,15 @@ export default {
     // const { handshake: { query } } = socket;
     // const { uid } = query;
 
-    // Player setup
-    const id = await $dao.db.inc('autoIncrement');
-    const room = await $dao.db.get('Room.car');
-    socket.data.Player = await $dao.db.set(`Player.${id}`, { id, room: 'Room.car', items: [], stats: { hp: 30, ma: 10, ac: 10, dc: 2, str: 8, dex: 6, int: 4 } });
-    socket.data.Player.socket = socket;
-    await socket.data.Player.toRoom({ $dao, socket, room });
+    // // Player setup
+    // const id = await $dao.db.inc('autoIncrement');
+    // const room = await $dao.db.get('Room.car');
+    // socket.data.Player = await $dao.db.set(`Player.${id}`, { id, room: 'Room.car', items: [], stats: { hp: 30, ma: 10, ac: 10, dc: 2, str: 8, dex: 6, int: 4 } });
+    // socket.data.Player.socket = socket;
+    // await socket.data.Player.toRoom({ $dao, room });
+    // socket.data.Player.status();
+    // socket.data.Player.scan();
 
-    socket.data.Player.status();
-    socket.data.Player.scan();
 //     socket.emit(
 //       'dialog',
 //       "^gIt's late at night, and your car has just ^rblown a tire ^gwhile driving along a secluded road. You get out and look inside your trunk; only to realize you no longer have a spare on you...",

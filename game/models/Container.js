@@ -13,7 +13,7 @@ export default {
 
     const items = await container.hydrate(itemsPath, []);
 
-    player.socket.emit('menu', { data, items: items.map(i => i.name) }, async ({ index }) => {
+    player.emit('menu', { data, items: items.map(i => i.name) }, async ({ index }) => {
       if (!index) return player.scan();
       const item = items[index - 1];
       const id = await container.pull(itemsPath, item.$id);
