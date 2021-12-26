@@ -28,10 +28,10 @@ export default {
     const units = await room.hydrate('units', []).then(results => results.filter(filter));
     const items = await room.hydrate('items', []);
     const exits = await room.hydrate('exits', {});
-    const description = !brief && room.description ? `    ${room.description}\n^:` : '';
-    const notice = items.length ? `^cYou notice ${items.map(i => i.name).join(', ')} here.\n` : '';
-    const alsoHere = units.length ? `^mAlso here:^ ${units.map(u => u.displayName()).join(', ')}\n` : '';
-    const obviousExits = `^gObvious exits: ${Object.entries(exits).map(([k, v]) => [v.displayName(), directions[k]].filter(Boolean).join(' ')).join(', ')}`;
-    return `^+^C${room.name}\n^:${description}${notice}${alsoHere}${obviousExits}`;
+    const description = !brief && room.description ? `    ${room.description}\n` : '';
+    const notice = items.length ? `{{ "You notice ${items.map(i => i.name).join(', ')} here." | roomNotice }}\n` : '';
+    const alsoHere = units.length ? `{{ "Also here:" | roomHere }} ${units.map(u => u.displayName()).join(', ')}\n` : '';
+    const obviousExits = `{{ "Obvious exits: ${Object.entries(exits).map(([k, v]) => [v.displayName(), directions[k]].filter(Boolean).join(' ')).join(', ')}" | roomExits }}`;
+    return `{{ "${room.name}" | roomTitle }}\n${description}${notice}${alsoHere}${obviousExits}`;
   },
 };

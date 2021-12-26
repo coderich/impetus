@@ -13,7 +13,7 @@ export default {
     await $dao.db.pull(`${room}.units`, $this.$id);
   },
 
-  displayName: ({ $this }) => `^M${$this.name}`,
+  displayName: ({ $this }) => `{{ "${$this.name}" | playerName }}`,
 
   status: async ({ $this }) => {
     const player = await $this.get();
@@ -57,7 +57,7 @@ export default {
     return $this.flow.get().fork(
       'open',
       async () => {
-        if (target === '') throw new Error('^rSyntax: OPEN {Direction|Item}');
+        if (target === '') throw new Error('{{ "Syntax: OPEN {Direction|Item}" | error }}');
 
         const player = await $this.get();
         const room = await player.hydrate('room');
@@ -86,7 +86,7 @@ export default {
     return $this.flow.get().fork(
       'close',
       async () => {
-        if (target === '') throw new Error('^rSyntax: CLOSE {Direction|Item}');
+        if (target === '') throw new Error('{{ "Syntax: CLOSE {Direction|Item}" | error }}');
 
         const player = await $this.get();
         const room = await player.hydrate('room');

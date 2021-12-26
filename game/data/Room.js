@@ -3,7 +3,7 @@ import { chance } from '../service';
 export default {
   car: {
     name: 'Roadside, Dirt Path Entrance',
-    description: 'You are standing at the entrace of a small dirt path along side a secluded road. From time to time you can hear the whisper of trees as the wind gently blows. A ^yBlack Audi A4^ sits motionless on the side of the road; victim of a flat tire.',
+    description: 'You are standing at the entrace of a small dirt path along side a secluded road. From time to time you can hear the whisper of trees as the wind gently blows. A {{ "Black Audi A4" | highlight }} sits motionless on the side of the road; victim of a flat tire.',
     exits: { n: 'Room.path' },
   },
   path: {

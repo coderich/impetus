@@ -10,23 +10,23 @@ export class IOServer {
     server.on('connection', (sock) => {
       const socket = new IOSocket(sock);
 
-      emitter.emit('$system', { type: '$socket:connection', socket });
+      emitter.emit('$socket:connection', { socket });
 
       sock.on('disconnecting', (reason) => {
-        emitter.emit('$system', { type: '$socket:disconnecting', socket, event: reason });
+        emitter.emit('$socket:disconnecting', { socket, event: reason });
       });
 
       sock.on('disconnect', (reason) => {
-        emitter.emit('$system', { type: '$socket:disconnect', socket, event: reason });
-        socket.removeAllListeners();
+        emitter.emit('$socket:disconnect', { socket, event: reason });
+        sock.removeAllListeners();
       });
 
       sock.on('error', (error) => {
-        emitter.emit('$system', { type: '$socket:error', socket, event: error });
+        emitter.emit('$socket:error', { socket, event: error });
       });
 
       sock.onAny((type, event) => {
-        emitter.emit('$system', { type: `$socket:${type}`, socket, event });
+        emitter.emit(`$socket:${type}`, { socket, event });
       });
     });
 
@@ -39,22 +39,35 @@ export class TelnetServer {
     const { GMCP, ECHO } = TelnetLib.options;
 
     return TelnetLib.createServer({ localOptions: [GMCP, ECHO] }, (sock) => {
-      const socket = new TelnetSocket(sock);
+      const gmcp = sock.getOption(GMCP);
+      const socket = new TelnetSocket(sock, gmcp);
+      const credentials = [];
 
       sock.on('negotiated', () => {
-        emitter.emit('$system', { type: '$socket:connection', socket });
+        emitter.emit('$socket:connection', { socket });
+        socket.login();
       });
 
-      sock.on('data', (data) => {
-        emitter.emit('$system', { type: '$socket:data', socket, event: data.toString('utf-8') });
+      sock.on('data', (buffer) => {
+        const data = buffer.toString('utf-8');
+
+        if (sock.isLoggedIn || credentials.length === 2) {
+          emitter.emit('$socket:data', { socket, event: data });
+        } else {
+          credentials.unshift(data);
+        }
+      });
+
+      gmcp.on('gmcp', (ns, event, data) => {
+        if (ns === 'impetus') emitter.emit(`$socket:${event}`, { socket, event: data });
       });
 
       sock.on('error', (error) => {
-        emitter.emit('$system', { type: '$socket:error', socket, event: error });
+        emitter.emit('$socket:error', { socket, event: error });
       });
 
       sock.on('end', (reason) => {
-        emitter.emit('$system', { type: '$socket:disconnect', socket, event: reason });
+        emitter.emit('$socket:disconnect', { socket, event: reason });
       });
     });
   }

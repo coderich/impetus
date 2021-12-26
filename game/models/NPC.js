@@ -1,3 +1,3 @@
 export default {
-  displayName: ({ $this }) => `^:${$this.name}`,
+  displayName: ({ $this }) => $this.name,
 };

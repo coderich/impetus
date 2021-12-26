@@ -14,6 +14,7 @@
     "redis": "^4.0.0",
     "rxjs": "^7.4.0",
     "socket.io": "^4.4.0",
+    "swig-templates": "^2.0.3",
     "telnetlib": "^1.0.1"
   }
 }

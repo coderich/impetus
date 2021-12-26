@@ -16,20 +16,20 @@ export default async (gameConfig) => {
   const $io = new IOServer(gameConfig.server);
   const $telnet = new TelnetServer();
 
-  emitter.on('$system', async ({ type, socket }) => {
-    if (type === '$socket:connection') {
-      // Player setup
-      const id = await $dao.db.inc('autoIncrement');
-      const $id = `Player.${id}`;
-      sockets[$id] = socket;
-      const room = await $dao.db.get('Room.car');
-      const $this = await $dao.db.set($id, { id, room: 'Room.car', items: [], stats: { hp: 30, ma: 10, ac: 10, dc: 2, str: 8, dex: 6, int: 4 } });
-      await $this.toRoom({ room });
-      $this.status();
-      $this.scan();
+  emitter.on('$socket:connection', async ({ socket }) => {
+    // Player setup
+    const id = await $dao.db.inc('autoIncrement');
+    const $id = `Player.${id}`;
+    sockets[$id] = socket;
+    const room = await $dao.db.get('Room.car');
+    const $this = await $dao.db.set($id, { id, room: 'Room.car', items: [], stats: { hp: 30, ma: 10, ac: 10, dc: 2, str: 8, dex: 6, int: 4 } });
+    await $this.toRoom({ room });
+    $this.status();
+    $this.scan();
 
-      Object.entries(gameConfig.translators).forEach(([on, directive]) => {
-        emitter.on(`$socket:${on}`, (event) => {
+    Object.entries(gameConfig.translators).forEach(([on, directive]) => {
+      emitter.on(`$socket:${on}`, ({ event, socket: sock }) => {
+        if (sock === socket) {
           Object.entries(directive).some(([path, fn]) => {
             const value = fn(event.trim());
 
@@ -41,20 +41,21 @@ export default async (gameConfig) => {
 
             return false;
           });
-        });
+        }
       });
-    }
+    });
   });
 
-  emitter.on('$system', ({ type, socket, event }) => {
-    const listener = gameConfig.listeners[type];
-    if (listener) listener({ $dao, $emitter, socket, event });
-    emitter.emit(type, event);
-  });
+  // emitter.on('$socket.data', ({ socket, event }) => {
+  //   const listener = gameConfig.listeners.data;
+  //   if (listener) listener({ $dao, $emitter, socket, event });
+  // });
 
   // Start server(s)
   await redis.connect();
   $io.listen(gameConfig.server.port || 3003);
   $telnet.listen(23);
-  emitter.emit('$system', { type: '$ready' });
+  const listener = gameConfig.listeners.$ready;
+  listener({ $dao });
+  // emitter.emit('$system', { type: '$ready' });
 };

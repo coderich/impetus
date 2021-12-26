@@ -8,7 +8,7 @@ export default {
     return $this.scan();
   },
 
-  displayName: ({ $this }) => `^M${$this.name}`,
+  displayName: ({ $this }) => `{{ "${$this.name}" | creatureName }}`,
 
   scan: async ({ $this }) => {
     const room = await $this.hydrate('room');

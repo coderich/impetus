@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE MudletPackage>
+<MudletPackage version="1.001">
+	<TriggerPackage />
+	<TimerPackage />
+	<AliasPackage />
+	<ActionPackage />
+	<ScriptPackage>
+		<Script isActive="yes" isFolder="no">
+			<name>_ref</name>
+			<packageName></packageName>
+			<script>local unescape = function(str)
+  str = string.gsub (str, "+", " ")
+  str = string.gsub (str, "%%(%x%x)", function(h) return string.char(tonumber(h,16)) end)
+  return str
+end
+
+local unescapeHtmlEntities = function(str)
+  str = string.gsub( str, '&amp;lt;', '&lt;' )
+  str = string.gsub( str, '&amp;gt;', '&gt;' )
+  str = string.gsub( str, '&amp;quot;', '"' )
+  str = string.gsub( str, '&amp;apos;', "'" )
+  str = string.gsub( str, '&amp;#(%d+);', function(n) return string.char(n) end )
+  str = string.gsub( str, '&amp;#x(%d+);', function(n) return string.char(tonumber(n,16)) end )
+  str = string.gsub( str, '&amp;amp;', '&amp;' ) -- Be sure to do this after all others
+  return str
+end</script>
+			<eventHandlerList />
+		</Script>
+		<Script isActive="yes" isFolder="no">
+			<name>layout</name>
+			<packageName></packageName>
+			<script>clearWindow();
+disableCommandLine();
+disableScrollBar();
+
+impetus = impetus or {}
+
+-- Containers
+local leftContainer = Geyser.Container:new({
+  name = "leftContainer",
+  backgroundColor = "blue",
+  x = 0, y = 0, width = "20%", height = "100%",
+})
+
+local bodyContainer = Geyser.Container:new({
+  name = "bodyContainer",
+  x = "25%", y = 0, width = "50%", height = "100%",
+})
+
+-- Console
+local bodyConsole = Geyser.MiniConsole:new({
+  name = "bodyConsole",
+  x = 0, y = 0, width = "100%", height = "100%",
+  fontSize = 15,
+  autoWrap = true,
+  scrollBar = false,
+  color = "black",
+}, bodyContainer)
+
+bodyConsole:clear();
+bodyConsole:enableCommandLine()
+bodyConsole:setCmdAction(function(input)
+  send(input)
+  bodyConsole:clearCmd()
+end)
+
+bodyConsole:setCmdLineStyleSheet([[
+  QPlainTextEdit{
+    border: 1px solid grey;
+    background-color: black;
+    font: bold 15pt "Arial";
+    color: white;
+  }
+]])
+
+impetus.bodyConsole = bodyConsole
+</script>
+			<eventHandlerList />
+		</Script>
+		<Script isActive="yes" isFolder="no">
+			<name>impetus.onData</name>
+			<packageName></packageName>
+			<script>impetus = impetus or {}
+
+function impetus:onData()
+  impetus.bodyConsole:cecho(gmcp.impetus.data .. "\n")
+end;
+</script>
+			<eventHandlerList>
+				<string>gmcp.impetus.data</string>
+			</eventHandlerList>
+		</Script>
+		<Script isActive="yes" isFolder="no">
+			<name>impetus.onLogin</name>
+			<packageName></packageName>
+			<script>impetus = impetus or {}
+
+function impetus:onLogin()
+  sendGMCP("impetus.signup " .. yajl.to_string{username = "richard", password = "password"})
+end;
+</script>
+			<eventHandlerList>
+				<string>gmcp.client.login</string>
+			</eventHandlerList>
+		</Script>
+		<Script isActive="yes" isFolder="no">
+			<name>impetus.onMenu</name>
+			<packageName></packageName>
+			<script>impetus = impetus or {}
+
+function impetus:onMenu()
+  echo("on menu\n")
+end;
+</script>
+			<eventHandlerList />
+		</Script>
+	</ScriptPackage>
+	<KeyPackage />
+	<HelpPackage>
+		<helpURL></helpURL>
+	</HelpPackage>
+</MudletPackage>

@@ -2,7 +2,7 @@ import { isDirection } from '../config.translators';
 
 export default {
   use: async ({ $this, $dao, player, event: direction }) => {
-    if (!isDirection(direction)) throw new Error('^rSyntax: USE {Item} {Direction}');
+    if (!isDirection(direction)) throw new Error('{{ "Syntax: USE {Item} {Direction}" | error }}');
     const key = await $this.get();
     const room = await player.hydrate('room');
     const exit = room.exits[direction];

@@ -1,4 +1,3 @@
-import { get } from 'lodash';
 import Chance from 'chance';
 import Swig from 'swig-templates';
 
