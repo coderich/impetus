@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { findTargetIndex } from '../service';
 
 export default {
   riddler: {
@@ -8,33 +9,33 @@ export default {
     greet: async ({ $this, player }) => {
       // Load quest progress
       const quest = await $this.get(player.$id, {
-        data: `^gHello stranger, people around here call me ^y${$this.name}^g, what can I do for ya?`,
-        items: ['*help*'],
+        data: `{{ "Hello stranger, people around here call me" | dialog }} {{ "${$this.name}" | highlight }}{{ ", what can I do for ya?" | dialog }}`,
+        keywords: ['help'],
       });
-
-      return new Promise((resolve) => {
-        player.emit('menu', quest, ({ text }) => {
-          switch (text) {
-            case '*help*': return this.default.riddler.help({ $this, player }).then(resolve);
-            case '*shed*': return this.default.riddler.shed({ $this, player }).then(resolve);
-            case '*riddle*': return this.default.riddler.riddle({ $this, player }).then(resolve);
-            default: return player.scan().then(resolve);
-          }
-        });
+      return player.emit('data', quest.data);
+    },
+    ask: async ({ $this, player, target }) => {
+      // Load quest progress
+      const quest = await $this.get(player.$id, {
+        data: `{{ "Hello stranger, people around here call me" | dialog }} {{ "${$this.name}" | highlight }} {{ ", what can I do for ya?" | dialog }}`,
+        keywords: ['help'],
       });
+      const cmd = quest.keywords[findTargetIndex(target, quest.keywords)];
+      if (!cmd) throw new Error(`${$this.name} has nothing to tell you.`);
+      return this.default.riddler[cmd]({ $this, player });
     },
     help: ({ $this, player }) => {
       return $this.set(player.$id, {
-        data: "^gI may have a spare tire in the ^yshed; ^gthough it's been many years since I've gone in there. Go have a look for yourself, you're welcome to anything you can find in that musky old place.",
-        items: ['*shed*'],
+        data: '{{ "I may have a spare tire in the" | dialog }} {{ "shed" | highlight }} {{ "though it\'s been many years since I\'ve gone in there. Go have a look for yourself, you\'re welcome to anything you can find in that musky old place." | dialog }}',
+        keywords: ['shed'],
       }).then((res) => {
         return this.default.riddler.greet({ $this, player });
       });
     },
     shed: ({ $this, player }) => {
       return $this.set(player.$id, {
-        data: "^gThe ^yshed ^gis located out in the yard; perhaps you'll find something of use there.",
-        items: [],
+        data: '{{ "The" | dialog }} {{ "shed" | highlight }} {{ "is located out in the yard; perhaps you\'ll find something of use there." | dialog }}',
+        keywords: ['riddle'],
       }).then((res) => {
         return this.default.riddler.greet({ $this, player });
       });
@@ -45,7 +46,7 @@ export default {
         if (data.error) return this.default.riddler.riddle({ $this, player });
 
         return new Promise((resolve) => {
-          player.emit('dialog', `^g${data.riddle} `, (answer) => {
+          player.emit('dialog', `{{ "${data.riddle}" | dialog }}`, (answer) => {
             if (answer.toLowerCase() === data.answer.toLowerCase()) return resolve(player.emit('dialog', 'You smart...'));
             return resolve(player.emit('dialog', 'You dumb...'));
           });

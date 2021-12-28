@@ -71,6 +71,7 @@ export default class Stream {
   }
 
   fork(name, ...unitsOfWork) {
+    if (this.closed) return throwError(new Error('closed'));
     const stream = this.get(name);
     const action = new Action(stream, ...unitsOfWork);
     const { exec } = action;

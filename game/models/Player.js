@@ -1,5 +1,5 @@
 import { isDirection } from '../config.translators';
-import { timeout, findTargetIndex } from '../service';
+import { timeout, findTargetIndex, resolveTargetData } from '../service';
 
 export default {
   toRoom: async ({ $this, $dao, room }) => {
@@ -71,8 +71,7 @@ export default {
 
         // Item check
         const items = await room.hydrate('items', []);
-        const index = findTargetIndex(target, items.map(i => i.name));
-        const item = items[index];
+        const item = items[findTargetIndex(target, items.map(i => i.name))];
         if (!item) throw new Error("You don't see that here.");
         if (!item.open) throw new Error("You can't open that!");
         return item.open({ player: $this });
@@ -146,14 +145,10 @@ export default {
       async () => {
         const room = await $this.hydrate('room');
         const units = await room.hydrate('units').then(results => results.filter(el => el.$id !== $this.$id));
-        const $target = units.find(unit => unit.name.toLowerCase().substring(0, target.length) === target);
+        const $target = units[findTargetIndex(target, units.map(u => u.name))];
 
         if ($target) {
-          if ($target.$type === 'NPC') {
-            await $dao.config.get(`${$target.$id}.greet`).then((fn = () => {}) => {
-              return fn({ $this: $target, $dao, player: $this });
-            });
-          }
+          if ($target.$type === 'NPC') return $target.greet({ player: $this });
         }
       },
     );
@@ -177,6 +172,21 @@ export default {
         if (!item.use) throw new Error('You cannot use that!');
 
         return item.use({ player: $this, event: targets.join(' ') });
+      }
+    ).subscribe({
+      error: e => $this.emit('data', e.message),
+    });
+  },
+
+  ask: ({ $this, $dao, event }) => {
+    $this.flow.get().pipe(
+      async () => {
+        const room = await $this.hydrate('room');
+        const npcs = await room.hydrate('units', []).then(units => units.filter(unit => unit.$type === 'NPC'));
+        const { index, target } = resolveTargetData(event, npcs.map(i => i.name));
+        const npc = npcs[index];
+        if (!npc) throw new Error('Nobody is here.');
+        return npc.ask({ player: $this, target });
       }
     ).subscribe({
       error: e => $this.emit('data', e.message),

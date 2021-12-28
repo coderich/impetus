@@ -26,3 +26,6 @@ telnet.setFilter('creatureName', input => `<magenta>${input}<reset>`);
 
 terminal.setFilter('playerName', input => `^M${input}^:`);
 telnet.setFilter('playerName', input => `<magenta>${input}<reset>`);
+
+terminal.setFilter('dialog', input => `^g${input}^:`);
+telnet.setFilter('dialog', input => `<LimeGreen>${input}<reset>`);

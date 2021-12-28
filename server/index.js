@@ -22,10 +22,11 @@ export default async (gameConfig) => {
     const $id = `Player.${id}`;
     sockets[$id] = socket;
     const room = await $dao.db.get('Room.car');
-    const $this = await $dao.db.set($id, { id, room: 'Room.car', items: [], stats: { hp: 30, ma: 10, ac: 10, dc: 2, str: 8, dex: 6, int: 4 } });
+    const $this = await $dao.db.set($id, { id, room: 'Room.car', items: [], stats: { hp: 100, mhp: 100, ma: 10, mma: 10, ac: 10, dc: 2, str: 8, dex: 6, int: 4 } });
     await $this.toRoom({ room });
     $this.status();
     $this.scan();
+    socket.player = $this;
 
     Object.entries(gameConfig.translators).forEach(([on, directive]) => {
       emitter.on(`$socket:${on}`, ({ event, socket: sock }) => {

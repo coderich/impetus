@@ -13,15 +13,15 @@ export default {
       base: 1000,
       mod: { dex: 2.00 },
     },
+    name: 'fist',
     hits: ['punch', 'hit', 'strike', 'jab'],
     misses: ['swing', 'lunge'],
   },
   kick: {},
-  claw: {},
-  bite: {
+  claw: {
     type: 'P',
     acc: {
-      base: '3d5+5',
+      base: '1d5+5',
       mod: { dex: 1.00 },
     },
     dmg: {
@@ -32,6 +32,25 @@ export default {
       base: 1000,
       mod: { dex: 2.00 },
     },
+    name: 'claw',
+    hits: ['slash', 'gouge', 'strike'],
+    misses: ['swipe'],
+  },
+  bite: {
+    type: 'P',
+    acc: {
+      base: '1d5+5',
+      mod: { dex: 1.00 },
+    },
+    dmg: {
+      base: '1d3',
+      mod: { str: 2.00 },
+    },
+    speed: {
+      base: 1000,
+      mod: { dex: 2.00 },
+    },
+    name: 'teeth',
     hits: ['bite', 'chomp', 'gnash'],
     misses: ['lunge', 'snap'],
   },

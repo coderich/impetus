@@ -14,7 +14,7 @@ export default {
   },
   rat: {
     name: 'rat',
-    attacks: ['Weapon.bite'],
+    attacks: ['Weapon.bite', 'Weapon.claw'],
     stats: {
       hp: '1d6+3',
       str: '1d2+1',

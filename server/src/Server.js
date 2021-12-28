@@ -45,7 +45,7 @@ export class TelnetServer {
 
       sock.on('negotiated', () => {
         emitter.emit('$socket:connection', { socket });
-        socket.login();
+        // socket.login();
       });
 
       sock.on('data', (buffer) => {

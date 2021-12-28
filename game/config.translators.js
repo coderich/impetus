@@ -37,6 +37,10 @@ export default {
       const matches = v.match(/^\buse\b\s*(.*)$/i);
       return matches ? matches[1] : null;
     },
+    'Player.ask': (v) => {
+      const matches = v.match(/^\bask\b\s*(.*)$/i);
+      return matches ? matches[1] : null;
+    },
     'Player.unknown': v => v,
   },
 };

@@ -7,12 +7,11 @@ export class IOSocket {
     this.broadcast = socket.broadcast;
     this.join = socket.join.bind(socket);
     this.leave = socket.leave.bind(socket);
-    // this.emit = socket.emit.bind(socket);
   }
 
-  emit(event, data, ...rest) {
+  emit(event, data, cb) {
     data = typeof data === 'string' ? terminal.render(data) : data;
-    return this.socket.emit(event, data, ...rest);
+    return this.socket.emit(event, data, cb);
   }
 }
 
@@ -31,9 +30,17 @@ export class TelnetSocket {
     return this.socket.on(...args);
   }
 
-  emit(event, data, ...rest) {
+  emit(event, data, cb) {
     data = typeof data === 'string' ? telnet.render(data) : data;
-    return this.gmcp.send('impetus', event, data);
+    return Promise.resolve(this.gmcp.send('impetus', event, data)).then((res) => {
+      if (!cb) return res;
+      return new Promise((resolve, reject) => {
+        this.player.flow.get().close();
+        this.socket.once('data', (resp) => {
+          Promise.resolve(cb(resp)).then(() => this.player.flow.get().open());
+        });
+      });
+    });
   }
 
   join(...args) {

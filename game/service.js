@@ -1,5 +1,6 @@
 import Chance from 'chance';
 import Swig from 'swig-templates';
+import Pluralize from 'pluralize';
 
 export const chance = new Chance();
 export const numToArray = num => Array.from(Array(num));
@@ -46,6 +47,19 @@ export const findTargetIndex = (target, items) => {
 
     return Boolean(info.found);
   });
+};
+
+export const resolveTargetData = (target, items) => {
+  let index;
+  const targets = [];
+  const words = target.toLowerCase().split(' ').map(w => w.trim());
+
+  do {
+    index = findTargetIndex(words.join(' '), items);
+    if (index === -1) targets.unshift(words.pop());
+  } while (index === -1 && words.length);
+
+  return { index, target: targets.join(' ') };
 };
 
 export const fromTemplate = async ($dao, template) => {
@@ -97,6 +111,9 @@ export const resolveAttack = async (source, target, attack) => {
   }
 
   if (outcome.hit) {
+    target.emit('data', `{{ "The ${source.name} ${Pluralize(outcome.verb)} you with it's ${attack.name} for ${outcome.dmg} damage!" | error }}`);
     await target.inc('stats.hp', -outcome.dmg).then(() => target.status());
+  } else {
+    target.emit('data', `The ${source.name} ${Pluralize(outcome.verb)} at you with it's ${attack.name}, but misses!`);
   }
 };
