@@ -260,20 +260,6 @@ onClick(menu.tabs[1]);
 				<eventHandlerList />
 			</Script>
 			<Script isActive="yes" isFolder="no">
-				<name>map</name>
-				<packageName></packageName>
-				<script>impetus = impetus or {}
-
-local map = Geyser.Label:new({
-  name = "map",
-  x = 0, y = 0, width = "100%", height = "100%",
-  fontSize = 20,
-}, impetus.mapContainer)
-
-map:echo("&lt;center&gt;Map Placeholder&lt;/center&gt;")</script>
-				<eventHandlerList />
-			</Script>
-			<Script isActive="yes" isFolder="no">
 				<name>room</name>
 				<packageName></packageName>
 				<script>impetus = impetus or {}
@@ -294,6 +280,83 @@ room:echo("&lt;center&gt;Room Placeholder&lt;/center&gt;")
 			<packageName></packageName>
 			<script></script>
 			<eventHandlerList />
+			<Script isActive="yes" isFolder="no">
+				<name>impetus.onMap</name>
+				<packageName></packageName>
+				<script>impetus = impetus or {}
+
+function impetus:onMap()
+  local areaId = 1
+  deleteArea(1)
+  clearAreaUserData(1)
+  setAreaName(areaId, gmcp.impetus.map.name)
+  
+  for i,room in ipairs(gmcp.impetus.map.rooms) do
+    addRoom(i)
+    setRoomArea(i, areaId)
+    display(room)
+    setRoomCoordinates(i, room.x, room.y, room.z)
+  end
+  
+  for i,exit in ipairs(gmcp.impetus.map.exits) do
+    for k,v in pairs(exit) do
+      setExit(i, v, k)
+    end
+  end
+  
+  centerview(gmcp.impetus.map.room)
+  setMapZoom(18)
+end
+
+local mapper = Geyser.Mapper:new({
+  name = "mapper",
+  x = 0, y = 0, width = "100%", height = "100%",
+}, impetus.mapContainer)
+
+-- 
+-- killAnonymousEventHandler(impetus.mapHandlerId or -1)
+-- 
+-- downloadFile(getMudletHomeDir() .. "/map.xml", "http://localhost:8000/map.xml")
+-- 
+-- impetus.mapHandlerId = registerAnonymousEventHandler("sysDownloadDone", function(_, location)
+  -- local mapper = Geyser.Mapper:new({
+    -- name = "mapper",
+    -- x = 0, y = 0, width = "100%", height = "100%",
+  -- }, impetus.mapContainer)
+-- 
+  -- loadMap(location)
+  -- setMapZoom(20)
+  -- centerview(1)
+-- end)
+
+
+-- deleteArea(1)
+-- local areaId = 1;
+-- setAreaName(areaId, "impetus")
+-- 
+-- local room1 = createRoomID()
+-- addRoom(room1)
+-- setRoomCoordinates(room1, 0, 0, 0)
+-- setRoomArea(room1, areaId)
+-- 
+-- local room2 = createRoomID()
+-- addRoom(room2)
+-- setRoomCoordinates(room2, 0, 2, 0)
+-- setRoomArea(room2, areaId)
+-- 
+-- setExit(room1, room2, "n");
+-- setExit(room2, room1, "s");
+-- setDoor(room1, "n", 1)
+-- setDoor(room2, "s", 3)
+-- 
+-- centerview(room1)
+-- setMapZoom(15)
+-- 
+</script>
+				<eventHandlerList>
+					<string>gmcp.impetus.map</string>
+				</eventHandlerList>
+			</Script>
 			<Script isActive="yes" isFolder="no">
 				<name>impetus.onLogin</name>
 				<packageName></packageName>

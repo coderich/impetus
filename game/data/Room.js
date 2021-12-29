@@ -5,16 +5,19 @@ export default {
     name: 'Roadside, Dirt Path Entrance',
     description: 'You are standing at the entrace of a small dirt path along side a secluded road. From time to time you can hear the whisper of trees as the wind gently blows. A {{ "Black Audi A4" | highlight }} sits motionless on the side of the road; victim of a flat tire.',
     exits: { n: 'Room.path' },
+    env: 'Env.path',
   },
   path: {
     name: 'Dirt Path',
     description: chance.paragraph(),
     exits: { n: 'Room.yard', s: 'Room.car' },
+    env: 'Env.path',
   },
   yard: {
     name: 'House, Yard',
     description: chance.paragraph(),
     exits: { n: 'Door.shed', s: 'Room.path', w: 'Room.house' },
+    env: 'Env.grass',
     spawns: [
       {
         to: 'items',

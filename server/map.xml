@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<map>
+  <areas>
+    <area id="1" name="Tutorial" />
+  </areas>
+  <rooms>
+    <room id="1" title="Aryana's Spring" area="1" environment="1">
+      <coord x="0" y="0" z="0" />
+      <exit direction="north" target="2" />
+    </room>
+    <room id="2" title="blah" area="1" environment="5">
+      <coord x="0" y="2" z="0" />
+      <exit direction="north" target="3" />
+      <exit direction="south" target="1" />
+    </room>
+    <room id="3" title="blue" area="1" environment="2">
+      <coord x="0" y="4" z="0" />
+      <exit direction="south" target="2" />
+    </room>
+  </rooms>
+  <environments>
+    <environment id="1" name="Dark Forest" color="2" htmlcolor="#00B300"/>
+    <environment id="2" name="Constructed underground" color="8" htmlcolor="#808080"/>
+    <environment id="3" name="Natural underground" color="8" htmlcolor="#808080"/>
+    <environment id="4" name="Forest" color="2" htmlcolor="#00B300"/>
+    <environment id="5" name="Beach" color="11" htmlcolor="#FFFF00"/>
+    <environment id="6" name="Desert" color="11" htmlcolor="#FFFF00"/>
+    <environment id="7" name="Grasslands" color="2" htmlcolor="#00B300"/>
+    <environment id="8" name="Urban" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="9" name="Hills" color="6" htmlcolor="#00A0A0"/>
+    <environment id="10" name="River" color="12" htmlcolor="#0000FF"/>
+    <environment id="11" name="Path" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="12" name="Road" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="13" name="Valley" color="2" htmlcolor="#00B300"/>
+    <environment id="14" name="Mountains" color="3" htmlcolor="#A0A000"/>
+    <environment id="15" name="Swamp" color="5" htmlcolor="#A000A0"/>
+    <environment id="16" name="Tundra" color="15" htmlcolor="#FFFFFF"/>
+    <environment id="17" name="Jungle" color="10" htmlcolor="#00FF00"/>
+    <environment id="18" name="Dwarven city" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="19" name="Sylayan city" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="20" name="Ocean" color="4" htmlcolor="#0000A0"/>
+    <environment id="21" name="Garden" color="10" htmlcolor="#00FF00"/>
+    <environment id="22" name="Freshwater" color="4" htmlcolor="#0000A0"/>
+    <environment id="23" name="Sewer" color="1" htmlcolor="#A00000"/>
+    <environment id="24" name="Deep Ocean" color="4" htmlcolor="#0000A0"/>
+    <environment id="25" name="Reef" color="4" htmlcolor="#0000A0"/>
+    <environment id="26" name="Vast Ocean" color="4" htmlcolor="#0000A0"/>
+    <environment id="27" name="Polar" color="15" htmlcolor="#FFFFFF"/>
+    <environment id="28" name="Underworld" color="8" htmlcolor="#808080"/>
+    <environment id="30" name="Docks" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="31" name="Warrens" color="1" htmlcolor="#A00000"/>
+    <environment id="32" name="Crags" color="3" htmlcolor="#A0A000"/>
+    <environment id="33" name="Acropolis" color="9" htmlcolor="#FF0000"/>
+    <environment id="35" name="Tainted Underground" color="1" htmlcolor="#A00000"/>
+    <environment id="36" name="Underground Lake" color="8" htmlcolor="#808080"/>
+    <environment id="37" name="Ruins" color="1" htmlcolor="#A00000"/>
+    <environment id="38" name="Desert Ruins" color="11" htmlcolor="#FFFF00"/>
+    <environment id="39" name="Tainted Water" color="1" htmlcolor="#A00000"/>
+    <environment id="41" name="Farmland" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="42" name="Academia" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="44" name="Forestal Council" color="10" htmlcolor="#00FF00"/>
+    <environment id="45" name="Fortress" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="46" name="Graveyard" color="8" htmlcolor="#808080"/>
+    <environment id="47" name="Village" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="48" name="Transportation" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="49" name="Pond" color="4" htmlcolor="#0000A0"/>
+    <environment id="50" name="Living Mountain" color="3" htmlcolor="#A0A000"/>
+    <environment id="51" name="Boats" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="52" name="Rashirmir" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="53" name="Dark Forest Council" color="2" htmlcolor="#00B300"/>
+    <environment id="54" name="Church" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="56" name="Lake of Fire" color="9" htmlcolor="#FF0000"/>
+    <environment id="57" name="Temple" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="58" name="Blackened Lands" color="8" htmlcolor="#808080"/>
+    <environment id="59" name="Volcano" color="9" htmlcolor="#FF0000"/>
+    <environment id="60" name="Twisted Forest" color="5" htmlcolor="#A000A0"/>
+    <environment id="61" name="Plane of Tempests" color="9" htmlcolor="#FF0000"/>
+    <environment id="62" name="Blackstone Keep" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="63" name="Catacombs" color="8" htmlcolor="#808080"/>
+    <environment id="64" name="Wetlands Village" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="65" name="Blackstone Dungeon" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="67" name="Cliffs" color="3" htmlcolor="#A0A000"/>
+    <environment id="68" name="Sheltered dell" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="69" name="Within a tent" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="70" name="Quarry" color="3" htmlcolor="#A0A000"/>
+    <environment id="71" name="Garrison" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="72" name="Pyramid" color="3" htmlcolor="#A0A000"/>
+    <environment id="73" name="Bog" color="5" htmlcolor="#A000A0"/>
+    <environment id="74" name="Blighted" color="5" htmlcolor="#A000A0"/>
+    <environment id="75" name="Villa" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="76" name="Frozen Bog" color="5" htmlcolor="#A000A0"/>
+    <environment id="77" name="Rocky Shore" color="3" htmlcolor="#A0A000"/>
+    <environment id="78" name="Scrublands" color="2" htmlcolor="#00B300"/>
+    <environment id="79" name="Tower" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="81" name="Twisted Forest Council" color="5" htmlcolor="#A000A0"/>
+    <environment id="82" name="Arctic" color="15" htmlcolor="#FFFFFF"/>
+    <environment id="83" name="Orc stronghold" color="9" htmlcolor="#FF0000"/>
+    <environment id="84" name="Goblin Village" color="9" htmlcolor="#FF0000"/>
+    <environment id="85" name="Tavern" color="7" htmlcolor="#C0C0C0"/>
+    <environment id="86" name="Ocean Dome" color="11" htmlcolor="#FFFF00"/>
+  </environments>
+</map>

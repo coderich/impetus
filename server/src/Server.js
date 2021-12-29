@@ -1,3 +1,5 @@
+import FS from 'fs';
+import HTTP from 'http';
 import SocketServer from 'socket.io';
 import TelnetLib from 'telnetlib';
 import { IOSocket, TelnetSocket } from './Socket';
@@ -45,7 +47,6 @@ export class TelnetServer {
 
       sock.on('negotiated', () => {
         emitter.emit('$socket:connection', { socket });
-        // socket.login();
       });
 
       sock.on('data', (buffer) => {
@@ -69,6 +70,19 @@ export class TelnetServer {
       sock.on('end', (reason) => {
         emitter.emit('$socket:disconnect', { socket, event: reason });
       });
+    });
+  }
+}
+
+export class WebServer {
+  constructor() {
+    const map = FS.readFileSync(`${__dirname}/../map.xml`);
+
+    return HTTP.createServer((req, res) => {
+      res.setHeader('Content-Type', 'application/xml');
+      // res.setHeader('Content-Disposition', 'attachment;filename=map.dat');
+      res.writeHead(200);
+      res.end(map);
     });
   }
 }

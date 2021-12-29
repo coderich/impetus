@@ -6,6 +6,51 @@ export default {
     $this.join(room.$id);
     await room.push('units', $this.$id);
     await $this.set('room', room.$id);
+
+    const Rooms = await $dao.config.get('Room');
+    const Doors = await $dao.config.get('Door');
+    const coords = {
+      n: [0, 2, 0],
+      s: [0, -2, 0],
+      e: [2, 0, 0],
+      w: [-2, 0, 0],
+    };
+
+    const rooms = Object.entries(Rooms).reduce((arr, [key, value], i) => {
+      return arr.concat({
+        id: i + 1,
+        key: `Room.${key}`,
+        name: value.name,
+        x: 0,
+        y: 0,
+        z: 0,
+      });
+    }, []);
+
+    const exits = Object.values(Rooms).reduce((arr, data, i) => {
+      const id = i + 1;
+
+      return arr.concat(Object.entries(data.exits).reduce((obj, [dir, exit]) => {
+        const [root, key] = exit.split('.');
+        const target = root === 'Room' ? exit : Doors[key].connects[dir];
+        const thisRoom = rooms.find(el => el.id === id);
+        const nextRoom = rooms.find(el => el.key === target);
+        if (nextRoom.id > id) {
+          const [x, y, z] = coords[dir];
+          nextRoom.x = thisRoom.x + x;
+          nextRoom.y = thisRoom.y + y;
+          nextRoom.z = thisRoom.z + z;
+        }
+        return Object.assign(obj, { [dir]: nextRoom.id });
+      }, {}));
+    }, []);
+
+    $this.emit('map', {
+      name: 'impetus',
+      room: rooms.find(el => el.key === room.$id).id,
+      rooms,
+      exits,
+    });
   },
 
   fromRoom: async ({ $this, $dao, room }) => {

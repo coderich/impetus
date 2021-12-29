@@ -1,7 +1,7 @@
 import Dao from './src/Dao';
 import Data from './src/Data';
 import Redis from './src/Redis';
-import { IOServer, TelnetServer } from './src/Server';
+import { IOServer, TelnetServer, WebServer } from './src/Server';
 import { emitter } from './src/ChainEmitter';
 
 export default async (gameConfig) => {
@@ -15,6 +15,7 @@ export default async (gameConfig) => {
   const $dao = new Dao($emitter, redis, new Data({}), new Data(gameConfig.data), gameConfig.models, sockets);
   const $io = new IOServer(gameConfig.server);
   const $telnet = new TelnetServer();
+  const $http = new WebServer();
 
   emitter.on('$socket:connection', async ({ socket }) => {
     // Player setup
@@ -56,6 +57,7 @@ export default async (gameConfig) => {
   await redis.connect();
   $io.listen(gameConfig.server.port || 3003);
   $telnet.listen(23);
+  $http.listen(8000, 'localhost');
   const listener = gameConfig.listeners.$ready;
   listener({ $dao });
   // emitter.emit('$system', { type: '$ready' });
