@@ -3,8 +3,13 @@ export const isDirection = v => v.match(/^([nsewud]|ne|nw|se|sw)$/i);
 export default {
   data: {
     'Player.none': v => v.match(/^$/),
+    'Player.break': v => v.match(/^;$/) && v,
     'Player.move': v => isDirection(v) && v,
     'Player.inventory': v => v.match(/^i(?:nventory|nventor|nvento|nvent|nven|nve|nv)?$/i) && v,
+    'Player.attack': (v) => {
+      const matches = v.match(/^\ba(?:ttack|ttac|tta|tt)?\b\s*(.*)$/i);
+      return matches ? matches[1] : null;
+    },
     'Player.look': (v) => {
       const matches = v.match(/^\bl(?:ook|oo|o)?\b\s*(.*)$/i);
       return matches ? matches[1] : null;

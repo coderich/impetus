@@ -3,7 +3,7 @@ export default {
     name: 'ant',
     attacks: ['Weapon.bite'],
     stats: {
-      hp: '1d4+2',
+      mhp: '1d4+2',
       str: 1,
       dex: '1d2',
       int: 0,
@@ -16,7 +16,7 @@ export default {
     name: 'rat',
     attacks: ['Weapon.bite', 'Weapon.claw'],
     stats: {
-      hp: '1d6+3',
+      mhp: '1d6+3',
       str: '1d2+1',
       dex: '1d3',
       int: 0,

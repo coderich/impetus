@@ -99,7 +99,7 @@ export const spawn = ($this, $dao, spawns = [], locals = {}) => {
   });
 };
 
-export const resolveAttack = async (source, target, attack) => {
+export const resolveAttack = (source, target, attack) => {
   const { acc, dmg } = attack;
   const outcome = { hit: false, verb: randomElement(attack.misses) };
   const hitRoll = roll(acc.base) + Object.entries(acc.mod).reduce((prev, [k, v]) => prev + source.stats[k] * v, 0);
@@ -111,9 +111,16 @@ export const resolveAttack = async (source, target, attack) => {
   }
 
   if (outcome.hit) {
-    target.emit('data', `{{ "The ${source.name} ${Pluralize(outcome.verb)} you with it's ${attack.name} for ${outcome.dmg} damage!" | error }}`);
-    await target.inc('stats.hp', -outcome.dmg).then(() => target.status());
-  } else {
-    target.emit('data', `The ${source.name} ${Pluralize(outcome.verb)} at you with it's ${attack.name}, but misses!`);
+    return target.inc('stats.hp', -outcome.dmg).then((hp) => {
+      source.emit('data', `{{ "You ${outcome.verb} the ${target.name} with your ${attack.name} for ${outcome.dmg} damage!" | hit }}`);
+      target.emit('data', `{{ "The ${source.name} ${Pluralize(outcome.verb)} you with it's ${attack.name} for ${outcome.dmg} damage!" | hit }}`);
+      if (hp <= 0) target.death();
+      else target.status();
+    });
   }
+
+  return Promise.all([
+    source.emit('data', `{{ "You ${outcome.verb} at the ${target.name} with your ${attack.name}, but miss!" | miss }}`),
+    target.emit('data', `{{ "The ${source.name} ${Pluralize(outcome.verb)} at you with it's ${attack.name}, but misses!" | miss }}`),
+  ]);
 };

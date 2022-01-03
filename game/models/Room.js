@@ -8,18 +8,22 @@ export default {
 
   displayName: () => null,
 
-  enter: async ({ $this, $dao, player, from, to }) => {
-    const creatures = await to.hydrate('units').then(units => units.filter(u => u.$type === 'Creature'));
-    player.broadcast.to(to.$id).emit('data', `${player.name} has entered the room.`);
+  enter: async ({ $this, $dao, player }) => {
+    const room = await $this.get();
+    await spawn(room, $dao, room.spawns);
+    const units = await $this.hydrate('units');
+    const creatures = units.filter(u => u.$type === 'Creature');
+    player.broadcast.to($this.$id).emit('data', `{{ "${player.name}" | highlight }} has entered the room.`);
     creatures.forEach(creature => creature.scan());
-    return player.toRoom({ $dao, room: to });
+    await player.toRoom({ $dao, room: $this });
+    return $this.combatStatus();
   },
 
-  exit: async ({ $dao, player, from, to }) => {
-    const creatures = await from.hydrate('units').then(units => units.filter(u => u.$type === 'Creature'));
-    player.broadcast.to(from.$id).emit('data', `^y${player.name}^ has left the room.`);
+  exit: async ({ $this, $dao, player }) => {
+    const creatures = await $this.hydrate('units').then(units => units.filter(u => u.$type === 'Creature'));
+    player.broadcast.to($this.$id).emit('data', `{{ "${player.name}" | highlight }} has left the room.`);
     creatures.forEach(creature => creature.scan());
-    return player.fromRoom({ $dao, room: from.$id });
+    return player.fromRoom({ $dao, room: $this.$id });
   },
 
   look: async ({ $this, $dao, brief = false, filter = () => true }) => {
@@ -33,5 +37,10 @@ export default {
     const alsoHere = units.length ? `{{ "Also here:" | roomHere }} ${units.map(u => u.displayName()).join(', ')}\n` : '';
     const obviousExits = `{{ "Obvious exits: ${Object.entries(exits).map(([k, v]) => [v.displayName(), directions[k]].filter(Boolean).join(' ')).join(', ')}" | roomExits }}`;
     return `{{ "${room.name}" | roomTitle }}\n${description}${notice}${alsoHere}${obviousExits}`;
+  },
+
+  combatStatus: async ({ $this }) => {
+    const units = await $this.hydrate('units');
+    units.forEach(unit => unit.emit('room', { units }));
   },
 };

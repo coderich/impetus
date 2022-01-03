@@ -76,16 +76,49 @@ local unescapeHtmlEntities = function(str)
 end</script>
 				<eventHandlerList />
 			</Script>
+			<Script isActive="yes" isFolder="no">
+				<name>impetus.setInterval</name>
+				<packageName></packageName>
+				<script>impetus = impetus or {}
+
+function impetus:setInterval(delay, cb)
+  local i = 0;
+  local continue = true;
+  local interval = delay / 1000
+  
+  local makeTimer = function(self)
+    tempTimer(interval, function()
+      if (continue) then
+        i = i + 1;
+        cb(i)
+        self(self)
+      end
+    end)
+  end
+
+  makeTimer(makeTimer)
+  
+  return function()
+    continue = false
+  end
+end
+</script>
+				<eventHandlerList />
+			</Script>
 		</ScriptGroup>
 		<ScriptGroup isActive="yes" isFolder="yes">
-			<name>layout</name>
+			<name>components</name>
 			<packageName></packageName>
 			<script></script>
 			<eventHandlerList />
 			<Script isActive="yes" isFolder="no">
-				<name>containers</name>
+				<name>layout</name>
 				<packageName></packageName>
-				<script>impetus = impetus or {}
+				<script>clearWindow();
+enableCommandLine();
+disableScrollBar();
+
+impetus = impetus or {}
 
 -- Regions
 impetus.leftRegion = Geyser.Container:new({
@@ -106,12 +139,12 @@ impetus.rightRegion = Geyser.Container:new({
 -- Containers
 impetus.mapContainer = Geyser.Container:new({
   name = "mapContainer",
-  x = 0, y = 0, width = "100%", height = "50%",
+  x = 0, y = 0, width = "100%", height = "30%",
 }, impetus.leftRegion)
 
 impetus.roomContainer = Geyser.Container:new({
   name = "roomContainer",
-  x = 0, y = "50%", width = "100%", height = "50%",
+  x = 0, y = "30%", width = "100%", height = "70%",
 }, impetus.leftRegion)
 
 impetus.menuContainer = Geyser.Container:new({
@@ -122,16 +155,10 @@ impetus.menuContainer = Geyser.Container:new({
 				<eventHandlerList />
 			</Script>
 			<Script isActive="yes" isFolder="no">
-				<name>main</name>
+				<name>impetus.console</name>
 				<packageName></packageName>
-				<script>clearWindow();
--- disableCommandLine();
-enableCommandLine();
-disableScrollBar();
+				<script>impetus = impetus or {}
 
-impetus = impetus or {}
-
--- Console
 local bodyConsole = Geyser.MiniConsole:new({
   name = "bodyConsole",
   x = 0, y = 0, width = "100%", height = "-30px",
@@ -143,39 +170,27 @@ local bodyConsole = Geyser.MiniConsole:new({
 
 setCmdLineStyleSheet("main", [[
   QPlainTextEdit {
-    padding-left: 100px; /* change 100 to your number */
-    background-color: black; /* change it to your background color */
+    padding-left: 0px;
+    color: white;
+    background-color: grey;
   }
 ]])
 
-local hpBar = Geyser.Gauge:new({
-  name = "hpBar",
-  x = 0, y = "-30px", width = "30%", height = "20px",
-}, impetus.bodyRegion)
+local handlers = {
+  ["gmcp.impetus.data"] = function() bodyConsole:cecho(gmcp.impetus.data .. "\n") end,
+  ["gmcp.impetus.dialog"] = function() bodyConsole:cecho("\n" .. gmcp.impetus.dialog .. "\n") end,
+}
 
-local maBar = Geyser.Gauge:new({
-  name = "maBar",
-  x = "35%", y = "-30px", width = "30%", height = "20px",
-}, impetus.bodyRegion)
-
-local stBar = Geyser.Gauge:new({
-  name = "stBar",
-  x = "70%", y = "-30px", width = "30%", height = "20px",
-}, impetus.bodyRegion)
-
-
--- maBar:setValue(math.random(1,100), 100)
--- stBar:setValue(math.random(1,100), 100)
-
-impetus:styleGauge(hpBar, "red")
-impetus:styleGauge(maBar, "blue")
-impetus:styleGauge(stBar, "green")
+function impetus:console(e)
+  handlers[e]()
+end;
 
 bodyConsole:clear();
-impetus.bodyConsole = bodyConsole
-impetus.hpBar = hpBar
 </script>
-				<eventHandlerList />
+				<eventHandlerList>
+					<string>gmcp.impetus.data</string>
+					<string>gmcp.impetus.dialog</string>
+				</eventHandlerList>
 			</Script>
 			<Script isActive="yes" isFolder="no">
 				<name>menu</name>
@@ -183,7 +198,7 @@ impetus.hpBar = hpBar
 				<script>impetus = impetus or {}
 
 local menu = {
-  tabs = {"Context", "Journal"},
+  tabs = {"Gossip", "Auction", "Journal"},
   color1 = "rgb(0,0,70)",
   color2 = "rgb(50,0,0)",
 }
@@ -260,32 +275,113 @@ onClick(menu.tabs[1]);
 				<eventHandlerList />
 			</Script>
 			<Script isActive="yes" isFolder="no">
-				<name>room</name>
+				<name>impetus.room</name>
 				<packageName></packageName>
 				<script>impetus = impetus or {}
+impetus.roomItems = impetus.roomItems or {}
 
-local room = Geyser.Label:new({
-  name = "room",
-  x = 0, y = "0", width = "100%", height = "100%",
-  fontSize = 20,
-}, impetus.roomContainer)
+-- Geyser.VBox:new({
+  -- name = "roomBox",
+  -- x = 0, y = 0, width = "100%", height = "100%",
+  -- color = "black",
+-- }, impetus.roomContainer)
 
-room:echo("&lt;center&gt;Room Placeholder&lt;/center&gt;")
+function impetus:room()
+  -- Clear all room items
+  for i in ipairs(impetus.roomItems) do
+    impetus.roomItems[i].name:hide()
+    impetus.roomItems[i].label:hide()
+    impetus.roomItems[i].gauge:hide()
+  end
+  
+  -- Recreate room items
+  for i,unit in ipairs(gmcp.impetus.room.units) do
+    local y = i * 50 - 45
+    
+    local hbox = Geyser.HBox:new({
+      name = "hbox" .. i,
+      x = 0, y = y, width = "100%", height = "20px",
+    }, impetus.roomContainer)
+    
+    local name = Geyser.Label:new({
+      name = "name" .. i,
+      color = "black",
+      fgColor = "magenta",
+      fontSize = 15, message = unit.name,
+    }, hbox)
+    
+    local label = Geyser.Label:new({
+      name = "label" .. i,
+      color = "black",
+      h_stretch_factor = 2.0,
+      fgColor = "yellow",
+      fontSize = 15, message = "( recovering )",
+    }, hbox)
+    
+    local gauge = Geyser.Gauge:new({
+      name = "gauge" .. i,
+      x = 0, y = y + 23 .. "px", width = "100%", height = "3px",
+    }, impetus.roomContainer)
+    
+    gauge:setValue(0, 100)
+    impetus:styleGauge(gauge, "green")
+    impetus.roomItems[i] = { name = name, label = label, gauge = gauge }
+    
+    -- local clearInterval = impetus:setInterval(1500, function(counter)
+      -- local value = counter * 20;
+      -- gauge:setValue(value , 100)
+      -- if (value &gt;= 100) then clearInterval() end
+    -- end)
+  end
+end
 </script>
-				<eventHandlerList />
+				<eventHandlerList>
+					<string>gmcp.impetus.room</string>
+				</eventHandlerList>
 			</Script>
-		</ScriptGroup>
-		<ScriptGroup isActive="yes" isFolder="yes">
-			<name>gmcp</name>
-			<packageName></packageName>
-			<script></script>
-			<eventHandlerList />
 			<Script isActive="yes" isFolder="no">
-				<name>impetus.onMap</name>
+				<name>impetus.hud</name>
 				<packageName></packageName>
 				<script>impetus = impetus or {}
 
-function impetus:onMap()
+local hpBar = Geyser.Gauge:new({
+  name = "hpBar",
+  x = 0, y = "-30px", width = "30%", height = "20px",
+}, impetus.bodyRegion)
+
+local maBar = Geyser.Gauge:new({
+  name = "maBar",
+  x = "35%", y = "-30px", width = "30%", height = "20px",
+}, impetus.bodyRegion)
+
+local stBar = Geyser.Gauge:new({
+  name = "stBar",
+  x = "70%", y = "-30px", width = "30%", height = "20px",
+}, impetus.bodyRegion)
+
+impetus:styleGauge(hpBar, "red")
+impetus:styleGauge(maBar, "blue")
+impetus:styleGauge(stBar, "green")
+
+function impetus:hud()
+  hpBar:setValue(gmcp.impetus.status.hp, gmcp.impetus.status.mhp, "&lt;center&gt;&lt;b&gt;"..gmcp.impetus.status.hp.." / "..gmcp.impetus.status.mhp.."&lt;/b&gt;&lt;/center&gt;")
+end;
+</script>
+				<eventHandlerList>
+					<string>gmcp.impetus.status</string>
+				</eventHandlerList>
+			</Script>
+			<Script isActive="yes" isFolder="no">
+				<name>impetus.map</name>
+				<packageName></packageName>
+				<script>impetus = impetus or {}
+
+local mapper = Geyser.Mapper:new({
+  name = "mapper",
+  x = 0, y = 0, width = "100%", height = "100%",
+}, impetus.mapContainer)
+
+function impetus:map()
   local areaId = 1
   deleteArea(1)
   clearAreaUserData(1)
@@ -294,7 +390,6 @@ function impetus:onMap()
   for i,room in ipairs(gmcp.impetus.map.rooms) do
     addRoom(i)
     setRoomArea(i, areaId)
-    display(room)
     setRoomCoordinates(i, room.x, room.y, room.z)
   end
   
@@ -305,13 +400,8 @@ function impetus:onMap()
   end
   
   centerview(gmcp.impetus.map.room)
-  setMapZoom(18)
+  setMapZoom(15)
 end
-
-local mapper = Geyser.Mapper:new({
-  name = "mapper",
-  x = 0, y = 0, width = "100%", height = "100%",
-}, impetus.mapContainer)
 
 -- 
 -- killAnonymousEventHandler(impetus.mapHandlerId or -1)
@@ -357,6 +447,12 @@ local mapper = Geyser.Mapper:new({
 					<string>gmcp.impetus.map</string>
 				</eventHandlerList>
 			</Script>
+		</ScriptGroup>
+		<ScriptGroup isActive="yes" isFolder="yes">
+			<name>gmcp</name>
+			<packageName></packageName>
+			<script></script>
+			<eventHandlerList />
 			<Script isActive="yes" isFolder="no">
 				<name>impetus.onLogin</name>
 				<packageName></packageName>
@@ -385,19 +481,6 @@ end;
 				</eventHandlerList>
 			</Script>
 			<Script isActive="yes" isFolder="no">
-				<name>impetus.onStatus</name>
-				<packageName></packageName>
-				<script>impetus = impetus or {}
-
-function impetus:onStatus()
-  impetus.hpBar:setValue(gmcp.impetus.status.hp, gmcp.impetus.status.mhp, "&lt;center&gt;&lt;b&gt;"..gmcp.impetus.status.hp.." / "..gmcp.impetus.status.mhp.."&lt;/b&gt;&lt;/center&gt;")
-end;
-</script>
-				<eventHandlerList>
-					<string>gmcp.impetus.status</string>
-				</eventHandlerList>
-			</Script>
-			<Script isActive="yes" isFolder="no">
 				<name>impetus.onDialog</name>
 				<packageName></packageName>
 				<script>impetus = impetus or {}
@@ -409,20 +492,6 @@ end;
 </script>
 				<eventHandlerList>
 					<string>gmcp.impetus.dialog</string>
-				</eventHandlerList>
-			</Script>
-			<Script isActive="yes" isFolder="no">
-				<name>impetus.onData</name>
-				<packageName></packageName>
-				<script>impetus = impetus or {}
-
-function impetus:onData()
-  -- cecho(gmcp.impetus.data .. "\n")
-  impetus.bodyConsole:cecho(gmcp.impetus.data .. "\n")
-end;
-</script>
-				<eventHandlerList>
-					<string>gmcp.impetus.data</string>
 				</eventHandlerList>
 			</Script>
 		</ScriptGroup>

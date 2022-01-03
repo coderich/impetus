@@ -54,6 +54,40 @@ export default class Model {
     }, {}));
 
     /**
+     * Player functions
+     */
+    if (wrapper.$type === 'Player') {
+      Object.defineProperties(wrapper, {
+        emit: {
+          value: (...args) => {
+            return sockets[wrapper.$id].emit(...args);
+          },
+          ...config,
+        },
+        broadcast: {
+          value: {
+            to: (...toArgs) => ({
+              emit: (...emitArgs) => sockets[wrapper.$id].broadcast.to(...toArgs).emit(...emitArgs),
+            }),
+          },
+          ...config,
+        },
+        join: {
+          value: (...args) => {
+            return sockets[wrapper.$id].join(...args);
+          },
+          ...config,
+        },
+        leave: {
+          value: (...args) => {
+            return sockets[wrapper.$id].leave(...args);
+          },
+          ...config,
+        },
+      });
+    }
+
+    /**
      * Additional convenience functions
      */
     Object.defineProperties(wrapper, {
@@ -63,32 +97,6 @@ export default class Model {
       },
       flow: {
         value: new Stream(wrapper.$id),
-        ...config,
-      },
-      emit: {
-        value: (...args) => {
-          return sockets[wrapper.$id].emit(...args);
-        },
-        ...config,
-      },
-      broadcast: {
-        value: {
-          to: (...toArgs) => ({
-            emit: (...emitArgs) => sockets[wrapper.$id].broadcast.to(...toArgs).emit(...emitArgs),
-          }),
-        },
-        ...config,
-      },
-      join: {
-        value: (...args) => {
-          return sockets[wrapper.$id].join(...args);
-        },
-        ...config,
-      },
-      leave: {
-        value: (...args) => {
-          return sockets[wrapper.$id].leave(...args);
-        },
         ...config,
       },
     });

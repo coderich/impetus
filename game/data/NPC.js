@@ -12,7 +12,7 @@ export default {
         data: `{{ "Hello stranger, people around here call me" | dialog }} {{ "${$this.name}" | highlight }}{{ ", what can I do for ya?" | dialog }}`,
         keywords: ['help'],
       });
-      return player.emit('data', quest.data);
+      return player.emit('dialog', quest.data);
     },
     ask: async ({ $this, player, target }) => {
       // Load quest progress

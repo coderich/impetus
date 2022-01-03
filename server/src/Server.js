@@ -43,7 +43,7 @@ export class TelnetServer {
     return TelnetLib.createServer({ localOptions: [GMCP, ECHO] }, (sock) => {
       const gmcp = sock.getOption(GMCP);
       const socket = new TelnetSocket(sock, gmcp);
-      const credentials = [];
+      // const credentials = [];
 
       sock.on('negotiated', () => {
         emitter.emit('$socket:connection', { socket });
@@ -51,12 +51,13 @@ export class TelnetServer {
 
       sock.on('data', (buffer) => {
         const data = buffer.toString('utf-8');
+        emitter.emit('$socket:data', { socket, event: data });
 
-        if (sock.isLoggedIn || credentials.length === 2) {
-          emitter.emit('$socket:data', { socket, event: data });
-        } else {
-          credentials.unshift(data);
-        }
+        // if (sock.isLoggedIn || credentials.length === 2) {
+        //   emitter.emit('$socket:data', { socket, event: data });
+        // } else {
+        //   credentials.unshift(data);
+        // }
       });
 
       gmcp.on('gmcp', (ns, event, data) => {

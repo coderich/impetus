@@ -59,6 +59,7 @@ export default class Action {
   }
 
   abort(reason = 'abort') {
+    if (this.unitsOfWork.length <= 1) return this; // Cannot abort the last unit of work
     this.subject.next(new Error(reason));
     return this;
   }

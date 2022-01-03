@@ -2,7 +2,7 @@ export default {
   punch: {
     type: 'B',
     acc: {
-      base: '3d5+5',
+      base: '1d5+5',
       mod: { dex: 1.00 },
     },
     dmg: {

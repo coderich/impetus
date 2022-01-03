@@ -23,7 +23,13 @@ export default async (gameConfig) => {
     const $id = `Player.${id}`;
     sockets[$id] = socket;
     const room = await $dao.db.get('Room.car');
-    const $this = await $dao.db.set($id, { id, room: 'Room.car', items: [], stats: { hp: 100, mhp: 100, ma: 10, mma: 10, ac: 10, dc: 2, str: 8, dex: 6, int: 4 } });
+    const $this = await $dao.db.set($id, {
+      id,
+      room: 'Room.car',
+      weapon: 'Weapon.punch',
+      stats: { hp: 100, mhp: 100, ma: 10, mma: 10, ac: 10, dc: 2, str: 8, dex: 6, int: 4 },
+      items: [],
+    });
     await $this.toRoom({ room });
     $this.status();
     $this.scan();

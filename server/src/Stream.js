@@ -122,7 +122,7 @@ export default class Stream {
   }
 
   abort(reason = 'abort') {
-    this.subject.next(new AbortStreamError(reason));
+    // this.subject.next(new AbortStreamError(reason));
     this.actions.splice(0, this.actions.length).forEach(action => action.abort(reason));
     return this;
   }

@@ -1,5 +1,5 @@
 import { isDirection } from '../config.translators';
-import { timeout, findTargetIndex, resolveTargetData } from '../service';
+import { timeout, findTargetIndex, resolveTargetData, resolveAttack } from '../service';
 
 export default {
   toRoom: async ({ $this, $dao, room }) => {
@@ -71,8 +71,16 @@ export default {
     $this.emit('data', await room.look({ brief: true, filter: el => el.$id !== $this.$id }));
   },
 
+  death: () => {
+
+  },
+
   take: () => {
 
+  },
+
+  break: ({ $this }) => {
+    $this.flow.get().abort();
   },
 
   look: ({ $this, event: target }) => {
@@ -92,6 +100,13 @@ export default {
           if (!to) throw new Error('There is no exit in that direction!');
           return $this.emit('data', await to.look({ dir: target }));
         }
+
+        // Unit check
+
+        // Item check
+
+        // Not here
+        return $this.emit('data', 'You don\'t see that here.');
       },
     ).subscribe({
       error: e => $this.emit('data', e.message),
@@ -158,10 +173,10 @@ export default {
       () => timeout(500),
       async ({ from, to }) => {
         // Enter
-        await to.enter({ $dao, player: $this, from, to, dir });
+        await to.enter({ $dao, player: $this, dir });
 
         // Exit
-        await from.exit({ $dao, player: $this, from, to, dir });
+        await from.exit({ $dao, player: $this, dir });
 
         // Scan
         return $this.scan();
@@ -185,6 +200,41 @@ export default {
     );
   },
 
+  attack: ({ $this, $dao, event, target }) => {
+    $this.flow.get().fork(
+      'attack',
+      async () => {
+        if (target) return { target };
+        const room = await $this.hydrate('room');
+        const creatures = await room.hydrate('units').then(results => results.filter(el => el.$type === 'Creature'));
+        target = creatures[findTargetIndex(event, creatures.map(u => u.name))];
+        if (!target) throw new Error('You do not see that here!');
+        return { target };
+      },
+
+      // Prep engagement
+      () => timeout(1000),
+
+      // Target check
+      async ({ $action }) => {
+        const player = await $this.get();
+        const $target = await target.get();
+        if (player.room !== target.room) $action.abort();
+        return { player, $target };
+      },
+
+      // Attack
+      async ({ player, $target }) => {
+        const attack = await $dao.db.get(player.weapon);
+        await resolveAttack(player, $target, attack);
+        return timeout(1500); // Mandatory recoil at this point
+      },
+    ).subscribe({
+      error: e => $this.emit('data', e.message),
+      complete: () => $this.attack({ target }),
+    });
+  },
+
   greet: ({ $this, $dao, event: target }) => {
     $this.flow.get().pipe(
       async () => {
@@ -195,6 +245,8 @@ export default {
         if ($target) {
           if ($target.$type === 'NPC') return $target.greet({ player: $this });
         }
+
+        return $this.chat({ event: `greet ${target}` });
       },
     );
   },

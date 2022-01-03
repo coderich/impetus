@@ -3,6 +3,12 @@ import Swig from 'swig-templates';
 export const terminal = new Swig.Swig({ autoescape: false });
 export const telnet = new Swig.Swig({ autoescape: false });
 
+terminal.setFilter('hit', input => `^r${input}^:`);
+telnet.setFilter('hit', input => `<red>${input}<reset>`);
+
+terminal.setFilter('miss', input => `^c${input}^:`);
+telnet.setFilter('miss', input => `<SkyBlue>${input}<reset>`);
+
 terminal.setFilter('error', input => `^r${input}^:`);
 telnet.setFilter('error', input => `<red>${input}<reset>`);
 
